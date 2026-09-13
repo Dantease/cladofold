@@ -20,7 +20,8 @@ export function foldState(opening) {
   return { effect, tilt: 1.55334 * Math.pow(effect, 1.8) };
 }
 export function followOpening(current, target, seconds, tolerance = 0.0001) {
-  const next = current + (target - current) * (1 - Math.exp(-Math.max(0, Math.min(seconds, 0.05)) * 15));
+  const responseSeconds = 0.16;
+  const next = current + (target - current) * (1 - Math.exp(-Math.max(0, Math.min(seconds, 0.05)) / responseSeconds));
   return Math.abs(next - target) < tolerance ? target : next;
 }
 

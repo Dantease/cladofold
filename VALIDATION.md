@@ -62,3 +62,5 @@ Browser review covered the feature panels and glass reflection at desktop and 39
 The previous direct-scroll behavior has been replaced with one smooth travel controller for both lid opening and interior scrolling. Twenty-five tests pass, including a short settling interval, frame-rate equivalence, immediate reversal from the visible position, transitions at the page top and fully open lid, resize bounds, external scrollbar synchronization, and immediate reduced-motion behavior. The production build passes.
 
 Browser review confirmed the lid follows a scroll gesture before settling, the page and parallax move together, reversing from the page continues into closing, and the compact layout remains usable with reduced motion. The browser reported no WebGL warnings or errors. Perceived trackpad feel remains a user acceptance check.
+
+The follow-up tuning increases the response time constant from 67 ms to 160 ms at the owner's request. A fixed scroll target is about 71% reached after 200 ms and 95% reached after 480 ms, with the same curve for lid and page motion. Frame-rate, reversal, endpoint, and reduced-motion checks remain in place.

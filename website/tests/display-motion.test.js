@@ -4,14 +4,14 @@ import { createDisplayMotion } from '../src/motion.js';
 
 function settle(motion) { for (let i=0; i<120 && motion.moving; i++) motion.advance(1/60); }
 
-test('lid gestures have a small smooth follow-through without losing input', () => {
+test('lid gestures have a noticeable smooth delay without losing input', () => {
   const motion = createDisplayMotion();
   for (const delta of [110,220,110]) motion.scroll(delta,2000);
   assert.equal(motion.target,440);
   motion.advance(1/60);
   assert.ok(motion.opening>0 && motion.opening<0.4);
   for(let i=0;i<11;i++) motion.advance(1/60);
-  assert.ok(motion.opening>0.37 && motion.opening<0.4);
+  assert.ok(motion.opening>0.27 && motion.opening<0.30);
   settle(motion);
   assert.equal(motion.opening,0.4);
   assert.equal(motion.moving,false);
@@ -33,9 +33,9 @@ test('interior scrolling uses the same easing and never overshoots', () => {
 test('reversing a gesture cancels the pending direction from the visible position', () => {
   const motion=createDisplayMotion();motion.scroll(440,2000);motion.advance(1/60);
   const visible=motion.current;
-  motion.scroll(-55,2000);motion.advance(1/60);
+  motion.scroll(-20,2000);motion.advance(1/60);
   assert.ok(motion.current<visible);
-  settle(motion);assert.ok(Math.abs(motion.current-(visible-55))<1e-9);
+  settle(motion);assert.ok(Math.abs(motion.current-(visible-20))<1e-9);
 });
 test('the page reaches its top before the lid starts closing', () => {
   const motion=createDisplayMotion();motion.open(1,true);motion.scrollTo(400,2000,true);

@@ -30,9 +30,9 @@ test('button animation is independent of 60Hz versus 120Hz frames', () => {
 
 test('opening settles to a usable exact endpoint and closing returns fully black', () => {
   let value=0;
-  for(let i=0;i<60;i++) value=followOpening(value,1,1/60);
+  for(let i=0;i<120;i++) value=followOpening(value,1,1/60);
   assert.equal(value,1);
-  for(let i=0;i<60;i++) value=followOpening(value,0,1/60);
+  for(let i=0;i<120;i++) value=followOpening(value,0,1/60);
   assert.equal(value,0);
 });
 test('a suspended tab resumes without one giant animation jump', () => {
