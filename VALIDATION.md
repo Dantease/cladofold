@@ -7,7 +7,9 @@ Build host: Apple silicon MacBook Pro (M5 Max), macOS 26.6.2, Apple Swift 6.3.3.
 - 38 behavior checks: first-degree closing onset, held partial folds, quick partial reopening, immediate full clear, near-closed endpoints, optional clear on stillness, invalid readings, manual mode, lifecycle resets, and preference migration.
 - 30 synthetic Core Image rendering checks: progressive blur, dark borders, endpoint fidelity, deterministic reversal, and 15 regression cases for unwanted darkening along the top edge. These render generated patterns, never the desktop.
 - 5 installation checks: fresh install, identical install, update, unrelated pane preservation, and invalid bundle rejection.
-- Universal arm64 and x86_64 app and preference-pane compilation; strict local signature verification.
+- Universal arm64 and x86_64 app and preference-pane compilation; strict local signature verification. GitHub’s macOS runner independently passed the build, behavioral timelines, and installation safeguards.
+- The installed app, extracted ZIP, and mounted read-only DMG have the same executable SHA-256: `4b79bbe8b88b632cbb79193fa23aa9bb41d8bbb815b520db3a296a24d4dbead3`. Both package checksums pass.
+- App and installed System Settings pane report version 1.3.0. Saved animation settings match the pre-update export; new controls migrate without discarding the existing configuration.
 
 ## Runtime limits
 
@@ -18,3 +20,5 @@ The effect does not draw on the macOS lock screen or run while asleep. New ad-ho
 ## Website
 
 The black entry, upward opening, downward closing, projected display blur, open-screen alignment, download controls, and dialogs were reviewed in a browser at desktop and phone widths (390 and 320 pixels). The compact layout allows content scrolling before closing when its interior overflows. Real iPhone touch and mobile GPU performance remain device-testing items.
+
+Seven website motion tests pass. Keyboard Home/End, the reduced-motion toggle, modal dismissal, and public subpath asset loading were checked in the browser without console warnings or errors. The public GitHub Pages deployment succeeded. The new download remains gated until its draft release is published after the live app check.
