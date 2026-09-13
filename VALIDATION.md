@@ -22,3 +22,11 @@ The effect does not draw on the macOS lock screen or run while asleep. New ad-ho
 The black entry, upward opening, downward closing, projected display blur, open-screen alignment, download controls, and dialogs were reviewed in a browser at desktop and phone widths (390 and 320 pixels). The compact layout allows content scrolling before closing when its interior overflows. Real iPhone touch and mobile GPU performance remain device-testing items.
 
 Seven website motion tests pass. Keyboard Home/End, the reduced-motion toggle, modal dismissal, and public subpath asset loading were checked in the browser without console warnings or errors. The public GitHub Pages deployment succeeded. The new download remains gated until its draft release is published after the live app check.
+
+## Website lid-only redesign — September 13, 2026
+
+Eight website tests pass, covering the corrected natural-trackpad/touch gesture directions, delta units, endpoints, frame-rate independence, and a lid angle that keeps the screen readable through the main blur transition. The production build passes.
+
+Browser review covered the lid without the base or keyboard, continuous frosted text and soft dark borders at partial opening, the live HTML handoff, and return to the black entry. Scrolling over the opening cue now starts the reveal. Desktop (1440×900), phone (390×844), and compact phone (320×568) layouts were checked. Compact content scrolls to the footer while the lid remains open; dialogs and reduced-motion controls work. The final local browser session reported no warnings or errors. Real-device touch and GPU performance remain untested.
+
+This change affects the website only; the native 1.3.0 runtime acceptance limits above still apply.

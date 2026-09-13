@@ -12,7 +12,11 @@ We decoded the Draco geometry, separated the base and lid, added an inferred hin
 
 ## Website dependencies
 
-Three.js and Vite are MIT-licensed. Their distributions and transitive dependencies retain their respective notices in the installed packages; exact versions are recorded in `website/package-lock.json`.
+Three.js, Vite, and [html-to-image](https://github.com/bubkoo/html-to-image) are MIT-licensed. Their distributions and transitive dependencies retain their respective notices in the installed packages; exact versions are recorded in `website/package-lock.json`. The website also ships the bundled Three.js and html-to-image copyright and license text in `website/public/DEPENDENCY-LICENSES.txt`.
+
+## Website wallpaper
+
+`website/public/wallpaper.jpg` is an original image generated for this project with OpenAI image generation. It depicts abstract pale blue, mint, and periwinkle glass forms, with no third-party product artwork. It is included under the project’s MIT license.
 
 ## Animation references
 

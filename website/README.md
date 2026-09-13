@@ -1,6 +1,6 @@
 # cladofold. website
 
-A Vite / Three.js static site. The articulated model and its notices are in `public/`. The MacBook is a real glTF mesh, with the website rendered onto its display during motion and accessible HTML controls at the open endpoint.
+A Vite / Three.js static site. The articulated model and its notices are in `public/`. Only the lid of the real glTF MacBook mesh is visible. The site snapshots its own HTML into a display texture, projects it onto black, and applies a continuous progressive blur during motion. The same HTML becomes interactive at the open endpoint, with the model bezel and notch above it.
 
 ## Develop
 
@@ -19,13 +19,13 @@ The development build labels the download as being prepared. Set `VITE_RELEASE_R
 
 ## Interaction
 
-- Scroll toward the page top to open; toward the bottom to close.
-- On touchscreens, pull a finger down to open and up to close. This preserves page-direction semantics.
+- The entry prompt says “Scroll to open.” With natural trackpad scrolling, an upward finger gesture opens (positive wheel delta); the reverse closes.
+- On touchscreens, swipe upward to open and downward to close.
 - Arrow Up/Down move the lid, Page Up/Down move farther, Home opens, End closes when focus is outside a control.
 - The cue is also a button. “Open without animation” goes directly to the downloads.
 - Reduced motion follows the system preference and has an explicit toggle. WebGL failure reveals ordinary download controls.
-- Short screens allow the content inside the display to scroll before closing at its bottom edge.
+- Short screens allow the content inside the display to scroll while the lid stays open; a closing gesture folds after the content reaches its top edge.
 
-The site loads no analytics, custom fonts, or third-party scripts. GitHub hosts the app downloads. Browser events redraw the scene only while it changes; device pixel ratio is capped at 1.5.
+The site loads no analytics, custom fonts, or third-party scripts. GitHub hosts the app downloads. The display snapshot captures only this site’s content; it does not request screen access. Browser events redraw the scene only while it changes; device pixel ratio is capped at 1.5.
 
 The model is CC BY 4.0. Preserve visible credit and `public/MODEL-LICENSE.txt` when sharing it. JavaScript source is MIT-licensed.

@@ -93,7 +93,7 @@ npm test
 npm run dev
 ```
 
-The site uses Three.js and a licensed articulated MacBook model. Scroll toward the top to open, toward the bottom to close. On touchscreens, pull a finger down to open. Buttons, keyboard controls, reduced motion, and a WebGL fallback keep downloads accessible. See [website development notes](website/README.md).
+The site uses Three.js and the lid of a licensed articulated MacBook model. Its “Scroll to open” cue leads into a frosted display with soft dark borders. An upward finger gesture opens on a natural-scrolling trackpad or touchscreen; the reverse closes it back to black. Buttons, keyboard controls, reduced motion, and a WebGL fallback keep downloads accessible. See [website development notes](website/README.md).
 
 ## Contributing and licenses
 

@@ -18,8 +18,6 @@ let scene;
 let sceneReady = false;
 let fingerY = null;
 let unavailable = false;
-const touch = matchMedia('(pointer: coarse)').matches;
-document.querySelector('#gesture-hint').textContent = touch ? 'Pull down to open' : 'Scroll up to open';
 document.querySelector('#phone-note').hidden = !/iPhone|iPad|Android/i.test(navigator.userAgent);
 
 const release = 'https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg';
@@ -39,7 +37,7 @@ function failScene() {
   document.querySelector('#fallback-note').hidden = false;
   setOpening(1, true);
 }
-try { scene = createScene(stage, () => { sceneReady = true; lastTime = performance.now(); schedule(); }, failScene); } catch { failScene(); }
+try { scene = createScene(stage, interior, () => { sceneReady = true; lastTime = performance.now(); schedule(); }, failScene); } catch { failScene(); }
 
 function refresh() {
   const opened = opening >= 0.999;
@@ -84,12 +82,12 @@ const isControl = (element) => element instanceof Element && element.closest('di
 const canScrollInterior = (element, delta) => opening >= 0.999 && interior.contains(element)
   && (delta > 0 ? interior.scrollTop + interior.clientHeight < interior.scrollHeight - 1 : interior.scrollTop > 0);
 window.addEventListener('wheel', event => {
-  if (event.ctrlKey || event.deltaY === 0 || document.querySelector('dialog[open]') || isControl(event.target)) return;
+  if (event.ctrlKey || event.deltaY === 0 || document.querySelector('dialog[open]')) return;
   if (canScrollInterior(event.target, event.deltaY)) return;
   event.preventDefault();
-  setOpening(reduced ? (event.deltaY < 0 ? 1 : 0) : wheelOpening(target, event.deltaY, event.deltaMode, innerHeight));
+  setOpening(reduced ? (event.deltaY > 0 ? 1 : 0) : wheelOpening(target, event.deltaY, event.deltaMode, innerHeight));
 }, { passive: false });
-window.addEventListener('touchstart', event => { fingerY = event.touches.length === 1 && !isControl(event.target) ? event.touches[0].clientY : null; }, { passive: true });
+window.addEventListener('touchstart', event => { fingerY = event.touches.length === 1 && !document.querySelector('dialog[open]') ? event.touches[0].clientY : null; }, { passive: true });
 window.addEventListener('touchmove', event => {
   if (fingerY === null || event.touches.length !== 1 || document.querySelector('dialog[open]')) return;
   const nextY = event.touches[0].clientY;
@@ -97,7 +95,7 @@ window.addEventListener('touchmove', event => {
   fingerY = nextY;
   if (canScrollInterior(event.target, -delta)) return;
   event.preventDefault();
-  if (delta) setOpening(reduced ? (delta > 0 ? 1 : 0) : touchOpening(target, delta));
+  if (delta) setOpening(reduced ? (delta < 0 ? 1 : 0) : touchOpening(target, delta));
 }, { passive: false });
 window.addEventListener('touchend', () => { fingerY = null; }, { passive: true });
 window.addEventListener('keydown', event => {
@@ -118,6 +116,8 @@ document.querySelectorAll('dialog').forEach(dialog => {
   dialog.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
 });
 window.addEventListener('resize', () => { scene?.resize(); refresh(); });
+let contentTimer;
+interior.addEventListener('scroll', () => { clearTimeout(contentTimer); contentTimer = setTimeout(() => scene?.refreshTexture(), 120); }, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.hidden && frame) { cancelAnimationFrame(frame); frame = 0; } else { lastTime = performance.now(); schedule(); } });
 window.addEventListener('pagehide', event => { if (!event.persisted) scene?.dispose(); });
 if (location.hash === '#inside') setOpening(1, true); else refresh();
