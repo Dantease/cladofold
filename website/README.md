@@ -19,6 +19,14 @@ GitHub Pages deploys this directory through the repository's Actions workflow. C
 
 The development build labels the download as being prepared. Set `VITE_RELEASE_READY=true` only when the pinned release asset in `src/main.js` exists. The Pages workflow verifies that asset before enabling the production link.
 
+The Pages environment permits deployment from the publishing branch, not release tags. After publishing a release without a website change, dispatch the workflow from that branch to refresh download availability:
+
+```sh
+gh workflow run pages.yml --repo Dantease/cladofold --ref codex/initial-release
+```
+
+Website commits on the publishing branch already trigger this deployment. The workflow deliberately has no release-tag deployment trigger, so it respects the existing environment protection rules.
+
 ## Interaction
 
 - The entry prompt says “Scroll to open.” With natural trackpad scrolling, an upward finger gesture opens (positive wheel delta); the reverse closes.
