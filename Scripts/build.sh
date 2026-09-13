@@ -30,4 +30,5 @@ codesign "${SIGN_FLAGS[@]}" "$APP"
 codesign --verify --deep --strict "$APP"
 lipo "$APP/Contents/MacOS/cladofold" -verify_arch arm64 x86_64
 lipo "$PANE/Contents/MacOS/CladofoldPane" -verify_arch arm64 x86_64
-printf 'Built universal cladofold. 1.3.0 (macOS 14.0+)\n'
+VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")
+printf 'Built universal cladofold. %s (macOS 14.0+)\n' "$VERSION"

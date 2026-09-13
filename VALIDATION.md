@@ -1,20 +1,28 @@
-# Validation — 1.3.0 preview
+# Validation — 1.3.1 preview candidate
 
 Build host: Apple silicon MacBook Pro (M5 Max), macOS 26.6.2, Apple Swift 6.3.3.
 
 ## Automated checks
 
 - 39 behavior checks: first-degree closing onset, held partial folds, quick partial reopening, immediate full clear and full black, near-closed endpoints, optional clear on stillness, invalid readings, manual mode, lifecycle resets, and preference migration.
-- 25 capture recovery and prompt-loop checks: denied access, successful retry, revocation, coalesced checks, cancellation, stale completion after sleep/display changes, separate permission versus display/renderer errors, denied preflight, repeated activation/wake events, persisted retry blocking, and explicit versus automatic rechecks. Total native checks: 102.
-- 33 synthetic Core Image rendering checks: progressive blur, dark borders, endpoint fidelity, deterministic reversal, 15 regression cases for unwanted darkening along the top edge, brighter early folds, and the 30-degree black endpoint. These render generated patterns, never the desktop.
+- 25 capture recovery and prompt-loop checks: denied access, successful retry, revocation, coalesced checks, cancellation, stale completion after sleep/display changes, separate permission versus display/renderer errors, denied preflight, repeated activation/wake events, persisted retry blocking, and explicit versus automatic rechecks. Total native checks: 101.
+- 32 synthetic Core Image rendering checks: progressive blur, dark borders, endpoint fidelity, deterministic reversal, 15 regression cases for unwanted darkening along the top edge, and the 30-degree black endpoint. The brighter-early-fold assertion was removed because that visual change is explicitly being rolled back; the earlier mid-fold shading assertion was restored. These render generated patterns, never the desktop.
 - 5 installation checks: fresh install, identical install, update, unrelated pane preservation, and invalid bundle rejection.
-- Universal arm64 and x86_64 app and preference-pane compilation; strict local signature verification. GitHub’s macOS runner independently passed the build, behavioral timelines, and installation safeguards.
-- The installed 1.3.0 build 9 app, the app extracted from the ZIP, and the app mounted from the read-only DMG have the same executable SHA-256: `de20c93f7ec22a929f0deae270b1f0f6292e26dbabd7b22dc15c405bbc79a654`. Both packaged bundles pass strict signature verification, and the disk image passes checksum verification. The build 9 DMG SHA-256 is `ad78c0c6d2b3c24fda2f8317f01bc60fa0924da35cc37656d298846d7ea50a9e`; ZIP SHA-256 is `8e5a96aca64b5b42eadf735adb561429a8d4207486cfcd9e8cf9c63fec260fe9`.
-- App and installed System Settings pane report version 1.3.0, build 9. Saved animation settings are preserved; this Mac's endpoint remains 30° at the owner's request.
+- Universal arm64 and x86_64 app and preference-pane compilation; strict local signature verification. GitHub’s macOS runner passed the previous version; this candidate has not yet been pushed or checked there.
+- The installed 1.3.1 build 10 app, the app extracted from the ZIP, and the app mounted from the read-only DMG have the same executable SHA-256: `c4c7f79e86e246957f8f0f6061d16b182113c1513a0428e49a29ba189b4cca5f`. Both packaged bundles pass strict signature verification, and the disk image passes checksum verification. The build 10 DMG SHA-256 is `72329fdb2376ad93f9cac5046a7749d55a711346b5922074b40056475626dfe8`; ZIP SHA-256 is `c8f85af5493a155bc951470a0cfb24a8a039d3a5213b25346f42f35563e58eb3`.
+- App and installed System Settings pane report version 1.3.1, build 10. The app, pane, and preferences were backed up before installation. Saved animation configuration was verified byte-for-byte unchanged after installation, then the previously disabled effect was enabled for testing. The endpoint remains 30° and smoothing remains 120 ms.
+
+## Approved animation rollback — September 13, 2026
+
+The owner reported that the updated appearance was worse and lagged, and approved restoring build 6's animation while retaining the 30-degree endpoint and capture-permission fixes. `BlurFilter.swift` and `BlurOverlay.swift` exactly match `e720993^`; the app's render call again submits each changed frame directly. This restores the prior edge shading and final fade and removes the single-frame-in-flight gate. The capture state machine, persistent retry suppression, immediate clear/full-black endpoints, saved controls, and website easing remain intact. The scheduling change has not been established as the cause of the reported lag.
+
+The installed build 10 completed its six-second desktop preview, reached progress 1, and returned to progress 0 with the overlay hidden and no rendering error. The sampled timeline observed 213 completed frames and a 28.8 ms initial capture; these are functional observations, not a frame-rate benchmark. Screen access required refreshing only cladofold.'s existing permission entry for the rebuilt ad-hoc app. After Quit & Reopen and one explicit Check again, real capture succeeded. A subsequent normal quit/relaunch returned directly to Ready with verified access and no permission prompt.
+
+Physical lid appearance and smoothness acceptance are pending. Version 1.3.1 packages are local review candidates; the public release and website download remain on 1.3.0 build 9 until the owner confirms the rollback.
 
 ## Runtime limits
 
-The installed build 9 completed live desktop rendering on this Mac. The six-second preview reached full effect and cleared, with 221 rendered frames observed during the sampled timeline and a 28.8 ms capture. The owner then confirmed that partial closing, holding, and reopening follow the physical lid and clear correctly. A normal quit/reopen returned directly to Ready with verified screen access and no new permission prompt. The saved full-darkness endpoint remains 30°; that numeric endpoint is covered by automated timelines and rendering tests, not a physical angle calibration.
+Before the rollback, build 9 completed live desktop rendering on this Mac. The six-second preview reached full effect and cleared, with 221 rendered frames observed during the sampled timeline and a 28.8 ms capture. The owner initially confirmed that partial closing, holding, and reopening follow the physical lid and clear correctly, then reported dissatisfaction with its appearance and lag and requested the rollback above. A normal quit/reopen retained verified screen access. The saved full-darkness endpoint remains 30°; that numeric endpoint is covered by automated timelines and rendering tests, not a physical angle calibration.
 
 The September 13 repair found live lid-angle readings but Screen Recording denied despite an enabled System Settings switch. With the owner's approval, only cladofold.'s old permission entry was removed and the installed build was added again. After macOS Quit & Reopen and one explicit Check again, preflight and actual ScreenCaptureKit capture both succeeded. The successful normal restart afterward confirmed access retention for this unchanged build.
 

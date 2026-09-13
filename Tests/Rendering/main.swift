@@ -51,7 +51,7 @@ var duo = BlurSettings()
 duo.radius = 8
 let folded = foldBytes(white, progress: 0.55, settings: duo)
 precondition(light(folded, x: 4, y: 24) < light(folded, x: 128, y: 24) / 3, "Soft dark side margins must appear")
-precondition(light(folded, x: 128, y: 232) > light(folded, x: 128, y: 24) + 20, "The brighter mid-fold still shades the moving outer edge more than the hinge")
+precondition(light(folded, x: 128, y: 232) > light(folded, x: 128, y: 24) + 30, "The moving outer edge must be darker than the hinge")
 precondition(abs(light(folded, x: 5, y: 48) - light(folded, x: 250, y: 48)) < 3, "Both side borders must be symmetric")
 precondition(foldBytes(input, progress: 0, settings: duo) == clear, "An open lid must have no projection, border or tint")
 let closed = foldBytes(white, progress: 1, settings: duo)
@@ -84,9 +84,7 @@ for radius in [0.0, 8.0, 36.0] {
 }
 print("Passed 15 top-edge reopening regression cases")
 
-// Early closing keeps the desktop readable; full black belongs to 30 degrees.
-let early = foldBytes(white, progress: 0.25, settings: BlurSettings())
-precondition(light(early, x: 128, y: 24) >= 235, "A small fold must not heavily darken the desktop")
+// The restored shading curve still finishes at the configured 30-degree endpoint.
 var angleMotion = LidMotion()
 let angleSettings = BlurSettings()
 _ = angleMotion.target(angle: 110, time: 0, settings: angleSettings)
@@ -94,7 +92,7 @@ let beforeBlack = foldBytes(white, progress: angleMotion.target(angle: 31, time:
 precondition(light(beforeBlack, x: 128, y: 128) > 0, "The display must retain light at 31 degrees")
 let atBlack = foldBytes(white, progress: angleMotion.target(angle: 30, time: 2, settings: angleSettings), settings: angleSettings)
 precondition(stride(from: 0, to: atBlack.count, by: 4).allSatisfy { atBlack[$0] == 0 && atBlack[$0+3] == 255 }, "The 30-degree endpoint must render opaque black")
-print("Passed 3 brightness and 30-degree endpoint checks")
+print("Passed 2 30-degree endpoint checks")
 
 // A synthetic contact sheet for visual review; never uses a desktop capture.
 let previewFolder = URL(fileURLWithPath: "build/fold-review", isDirectory: true)

@@ -80,15 +80,14 @@ enum OverlayError: LocalizedError {
         ready = true
     }
 
-    @discardableResult func render(progress: Double, settings: BlurSettings) -> Bool {
-        guard ready, let panel, let surface, !surface.rendering else { return false }
+    func render(progress: Double, settings: BlurSettings) {
+        guard ready, let panel, let surface else { return }
         surface.progress = progress
         surface.settings = settings
         // Keep only a tiny onset blend; the former 4% ramp hid early lid motion.
         panel.alphaValue = min(1, progress / 0.005)
         if !panel.isVisible { panel.orderFrontRegardless() }
         surface.draw()
-        return surface.rendering
     }
 
     func clear(discardResources: Bool = false) {
@@ -115,7 +114,6 @@ enum OverlayError: LocalizedError {
     var settings = BlurSettings()
     private(set) var renderedFrames = 0
     private(set) var renderError: String?
-    private(set) var rendering = false
     var pointsToPixels = 2.0
     private var frameGeneration = 0
     private let context: CIContext
@@ -146,8 +144,7 @@ enum OverlayError: LocalizedError {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 
     func draw(in view: MTKView) {
-        guard !rendering, let snapshot, let drawable = currentDrawable, let command = commands.makeCommandBuffer() else { return }
-        rendering = true
+        guard let snapshot, let drawable = currentDrawable, let command = commands.makeCommandBuffer() else { return }
         var output = BlurFilter.fold(image: snapshot, progress: progress, settings: settings, pixelsPerPoint: pointsToPixels)
         output = output.transformed(by: CGAffineTransform(scaleX: drawableSize.width / snapshot.extent.width, y: drawableSize.height / snapshot.extent.height))
         context.render(output, to: drawable.texture, commandBuffer: command, bounds: CGRect(origin: .zero, size: drawableSize), colorSpace: colorSpace)
@@ -156,7 +153,6 @@ enum OverlayError: LocalizedError {
         command.addCompletedHandler { [weak self] result in
             let error = result.error?.localizedDescription
             DispatchQueue.main.async {
-                self?.rendering = false
                 guard self?.frameGeneration == generation else { return }
                 if let error { self?.renderError = error }
                 else { self?.renderedFrames += 1 }

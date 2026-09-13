@@ -1,4 +1,4 @@
-cladofold. 1.3.0 — preview
+cladofold. 1.3.1 — preview
 A softer close. A clearer open.
 
 INSTALL

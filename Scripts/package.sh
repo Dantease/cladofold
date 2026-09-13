@@ -32,7 +32,7 @@ if [ "$MODE" = '--notarize' ]; then
     python3 - "$STAGE/READ ME.txt" <<'PY'
 from pathlib import Path
 import sys
-p = Path(sys.argv[1]); s = p.read_text().replace('1.3.0 — preview', '1.3.0')
+p = Path(sys.argv[1]); s = p.read_text().replace(' — preview', '', 1)
 a = s.index('THIS IS AN UNNOTARIZED PREVIEW'); b = s.index('\nREQUIREMENTS', a)
 s = s[:a] + 'APPLE NOTARIZATION\nThis release is signed with Developer ID and notarized by Apple. macOS will\nask whether you want to open the downloaded app on first launch.\n' + s[b:]
 p.write_text(s)

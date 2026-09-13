@@ -160,9 +160,8 @@ import ScreenCaptureKit
             }
         }
         if overlay.ready && abs(progress - lastRender) > 0.0005 {
-            // Keep at most one GPU frame in flight. If it is busy, retry the
-            // newest angle on the next tick rather than queue stale blur frames.
-            if overlay.render(progress: progress, settings: preferences.settings) { lastRender = progress }
+            overlay.render(progress: progress, settings: preferences.settings)
+            lastRender = progress
         }
     }
 
