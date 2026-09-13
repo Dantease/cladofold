@@ -40,6 +40,8 @@ The app detects the actual sensor; it does not restrict access based on a model 
 
 The current downloadable DMG and ZIP are **ad-hoc-signed, unnotarized previews**. Apple may block opening them by default. Recipients can follow Apple's [app-specific Open Anyway instructions](https://support.apple.com/102445) if they trust the source and their Mac permits it. No Gatekeeper bypass scripts or quarantine-stripping instructions are included.
 
+An ad-hoc signature identifies only the exact program being signed, without a developer certificate ([Apple's code-signing guide](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html)). Rebuilt previews can therefore require a fresh Screen Recording permission entry. The app stops automatic checks after a failure so activation and wake cannot keep triggering requests. Stable Developer ID signing across releases and a real upgrade/permission-retention test are still needed before presenting updates as seamless. Notarization does not remove the user's initial Screen Recording consent or macOS-controlled reminders.
+
 For a normal notarized release, install a Developer ID Application certificate and configure a `notarytool` Keychain profile. Run:
 
 ```sh

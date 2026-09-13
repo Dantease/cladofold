@@ -68,9 +68,11 @@ asleep or cover the lock screen. External displays are not affected.
 TROUBLESHOOTING
 An orange cf. menu-bar mark means the animation is not ready. The setup card
 at the top of the app explains whether it needs screen access, a working sensor,
-an enabled effect, or an awake built-in display. Return from Privacy & Security
-to recheck automatically, or choose “Check again”. A successful screen capture
-is required before the app reports verified access.
+an enabled effect, or an awake built-in display. Automatic capture checks require
+macOS to allow access and stop after a failed check, even across app restarts.
+A newly granted permission or your explicit “Check again” action permits a retry.
+A successful screen capture is required before the app reports verified access.
+Repeatedly dismissing or approving a prompt does not repair an outdated entry.
 If an updated preview cannot capture despite permission being enabled, remove
 only its old entry in Screen & System Audio Recording, add the installed
 cladofold. app again, enable it, and quit/reopen when prompted.

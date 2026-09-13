@@ -21,9 +21,10 @@ import ScreenCaptureKit
     private var angle: Double?
     private var sampleTime = Date.distantPast
     private var sensorMessage = "Connecting to lid sensor"
-    private var captureAccess = CaptureAccess()
+    private var captureAccess = CaptureAccess(automaticChecksBlocked: UserDefaults.standard.bool(forKey: "screenCaptureAutomaticChecksBlocked"))
     private var permission: Bool { captureAccess.ready }
-    private var lastPreflight = false
+    private var lastPreflight: Bool?
+    private var captureChecksStarted = 0
     private var errorMessage: String?
     private var suspended = false
     private var locked = false
@@ -63,9 +64,7 @@ import ScreenCaptureKit
         addTimer(interval: 0.5) { [weak self] in self?.publishStatus() }
         reconcileLoginItem()
         publishStatus()
-        if lastPreflight || UserDefaults.standard.bool(forKey: "screenPermissionWasRequested") {
-            Task { await verifyCaptureAccess(openSettingsOnFailure: false) }
-        }
+        prepareAfterResume()
         let args = CommandLine.arguments
         if let index = args.firstIndex(of: "--command"), args.indices.contains(index + 1) {
             command(args[index + 1])
@@ -103,14 +102,14 @@ import ScreenCaptureKit
     @objc private func displaysChanged() { captureAccess.invalidate(); clear(); overlay.clear(discardResources: true); prepareAfterResume() }
 
     private func prepareAfterResume() {
-        guard !suspended, !locked,
-              CGPreflightScreenCaptureAccess() || UserDefaults.standard.bool(forKey: "screenPermissionWasRequested") else { return }
-        Task { await verifyCaptureAccess(openSettingsOnFailure: false) }
+        guard !suspended, !locked, !captureAccess.automaticChecksBlocked,
+              CGPreflightScreenCaptureAccess() else { return }
+        Task { await verifyCaptureAccess() }
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        // Returning from Privacy & Security should recover without requiring
-        // the user to discover a hidden retry control or restart unnecessarily.
+        // This is a non-prompting preflight. A failed capture never retries merely
+        // because an OS prompt returned focus to the app.
         if !permission { prepareAfterResume() }
     }
 
@@ -153,6 +152,7 @@ import ScreenCaptureKit
                 } catch {
                     guard self.captureGeneration == generation, !Task.isCancelled else { return }
                     self.captureAccess.fail(error)
+                    self.saveCaptureCheckPolicy()
                     self.clear()
                     self.overlay.clear(discardResources: true)
                     self.publishStatus()
@@ -212,14 +212,18 @@ import ScreenCaptureKit
 
     private func publishStatus() {
         let preflight = CGPreflightScreenCaptureAccess()
-        let newlyAllowed = preflight && !lastPreflight
-        if !preflight && lastPreflight {
+        let newlyAllowed = preflight && lastPreflight == false
+        if !preflight && lastPreflight == true {
             captureAccess.invalidate()
             clear()
             overlay.clear(discardResources: true)
         }
         lastPreflight = preflight
-        if newlyAllowed && !permission { prepareAfterResume() }
+        if newlyAllowed {
+            captureAccess.permissionChanged()
+            saveCaptureCheckPolicy()
+            prepareAfterResume()
+        }
         let freshAngle = Date().timeIntervalSince(sampleTime) < 0.6 ? angle : nil
         let previewMessage: String? = previewStart == nil ? nil : (overlay.ready ? "Previewing on built-in display" : "Preparing screen preview")
         let message = locked ? "Animation paused while the Mac is locked" : (suspended ? "Animation paused while the display sleeps" : (captureAccess.message ?? overlay.renderError ?? errorMessage ?? previewMessage ?? (!preferences.settings.enabled ? "Effect is turned off" : (freshAngle == nil ? sensorMessage : "Ready · follows your lid"))))
@@ -229,6 +233,9 @@ import ScreenCaptureKit
         if let openAngle = motion.openAngle { info["openAngle"] = openAngle }
         info["progress"] = progress
         info["captureMilliseconds"] = overlay.captureMilliseconds
+        info["captureChecksStarted"] = captureChecksStarted
+        info["preflightGranted"] = preflight
+        info["automaticCaptureChecksBlocked"] = captureAccess.automaticChecksBlocked
         DistributedNotificationCenter.default().postNotificationName(CladofoldID.status, object: nil, userInfo: info, deliverImmediately: true)
         statusItem.button?.toolTip = "cladofold. · \(message)" + (freshAngle.map { " · \(Int($0))°" } ?? "")
         statusItem.button?.contentTintColor = ready ? nil : .systemOrange
@@ -334,22 +341,34 @@ import ScreenCaptureKit
 
     @objc private func requestPermission() {
         clear()
-        NSApp.activate(ignoringOtherApps: true)
-        UserDefaults.standard.set(true, forKey: "screenPermissionWasRequested")
-        Task { await verifyCaptureAccess(openSettingsOnFailure: true) }
+        // Opening settings must not start another capture request. Register the
+        // app once, on the person's first explicit setup action only.
+        if !UserDefaults.standard.bool(forKey: "screenPermissionWasRequested") {
+            UserDefaults.standard.set(true, forKey: "screenPermissionWasRequested")
+            if !CGPreflightScreenCaptureAccess() { _ = CGRequestScreenCaptureAccess() }
+        }
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @objc private func recheckCaptureAccess() {
         clear()
-        Task { await verifyCaptureAccess(openSettingsOnFailure: false) }
+        Task { await verifyCaptureAccess(userInitiated: true) }
+    }
+
+    private func saveCaptureCheckPolicy() {
+        UserDefaults.standard.set(captureAccess.automaticChecksBlocked, forKey: "screenCaptureAutomaticChecksBlocked")
     }
 
     /// Validate the API we actually use. CoreGraphics preflight can remain false
     /// after a permission change even when ScreenCaptureKit is available.
-    private func verifyCaptureAccess(openSettingsOnFailure: Bool) async {
-        guard !suspended, !locked, let request = captureAccess.begin() else { return }
+    private func verifyCaptureAccess(userInitiated: Bool = false) async {
+        guard !suspended, !locked,
+              let request = captureAccess.begin(preflightGranted: CGPreflightScreenCaptureAccess(), userInitiated: userInitiated) else { return }
+        captureChecksStarted += 1
         publishStatus()
-        defer { publishStatus() }
+        defer { saveCaptureCheckPolicy(); publishStatus() }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             guard let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }) else { throw OverlayError.noDisplay }
@@ -371,9 +390,6 @@ import ScreenCaptureKit
             guard captureAccess.fail(error, request: request) else { return }
             clear()
             overlay.clear(discardResources: true)
-            if openSettingsOnFailure, captureAccess.state == .needsPermission, let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                NSWorkspace.shared.open(url)
-            }
         }
     }
 

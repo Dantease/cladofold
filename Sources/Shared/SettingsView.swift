@@ -16,7 +16,7 @@ struct SettingsView: View {
         case .checking: return "Screen access · checking"
         case .unavailable: return "Screen access · unavailable"
         case .unverified: return "Screen access · not checked"
-        case .needsPermission: return "Screen access · needed"
+        case .needsPermission: return "Screen access · not verified"
         }
     }
     private var angle: Double { followLid ? (status.angle ?? simulatedAngle) : simulatedAngle }
@@ -60,7 +60,7 @@ struct SettingsView: View {
                         Label(captureLabel, systemImage: "rectangle.dashed.badge.record")
                     }.font(.caption).foregroundStyle(.secondary)
                     if status.running && !status.permission {
-                        Text(status.captureState == .unavailable ? "Keep the built-in display awake and unlocked, then check again. If the problem remains, quit and reopen cladofold." : "Enable cladofold. in Privacy & Security → Screen & System Audio Recording. Complete Touch ID or your Mac password, then accept Quit & Reopen if asked.")
+                        Text(status.captureState == .unavailable ? "Keep the built-in display awake and unlocked, then check again. If the problem remains, quit and reopen cladofold." : "Already allowed screen access? Choose Check again. If macOS still cannot authorize this copy, quit and reopen the installed app. Automatic retries pause after a failed check.")
                             .font(.caption).fixedSize(horizontal: false, vertical: true)
                         Text("Frames stay in memory on your Mac and are discarded when the effect clears.")
                             .font(.caption).foregroundStyle(.secondary)
@@ -71,7 +71,10 @@ struct SettingsView: View {
                             Button("Check again") { sendCommand("recheck") }
                         }.disabled(status.captureState == .checking)
                         if status.captureState == .needsPermission {
-                            Text("Already enabled? Quit and reopen cladofold. If an updated preview is still denied, remove only its old permission entry and add the installed app again.")
+                            Text("An updated preview can leave an older permission entry behind. If restarting does not help, remove only cladofold.’s old entry and add the installed app again in Screen & System Audio Recording.")
+                                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        } else if status.captureState == .unverified {
+                            Text("First time here? Open Screen Recording and enable cladofold. Complete your Mac’s authentication and Quit & Reopen if asked.")
                                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         }
                     }
