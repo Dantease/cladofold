@@ -21,9 +21,9 @@ import ScreenCaptureKit
     private var angle: Double?
     private var sampleTime = Date.distantPast
     private var sensorMessage = "Connecting to lid sensor"
-    private var permission = false
-    private var verifiedCaptureAccess = false
-    private var checkingCaptureAccess = false
+    private var captureAccess = CaptureAccess()
+    private var permission: Bool { captureAccess.ready }
+    private var lastPreflight = false
     private var errorMessage: String?
     private var suspended = false
     private var locked = false
@@ -63,7 +63,7 @@ import ScreenCaptureKit
         addTimer(interval: 0.5) { [weak self] in self?.publishStatus() }
         reconcileLoginItem()
         publishStatus()
-        if permission || UserDefaults.standard.bool(forKey: "screenPermissionWasRequested") {
+        if lastPreflight || UserDefaults.standard.bool(forKey: "screenPermissionWasRequested") {
             Task { await verifyCaptureAccess(openSettingsOnFailure: false) }
         }
         let args = CommandLine.arguments
@@ -96,15 +96,22 @@ import ScreenCaptureKit
         NotificationCenter.default.addObserver(self, selector: #selector(displaysChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
     }
 
-    @objc private func sleeping() { suspended = true; clear(); overlay.clear(discardResources: true) }
+    @objc private func sleeping() { suspended = true; captureAccess.invalidate(); clear(); overlay.clear(discardResources: true) }
     @objc private func waking() { suspended = false; sampleTime = .distantPast; clear(); prepareAfterResume() }
-    @objc private func screenLocked() { locked = true; clear() }
+    @objc private func screenLocked() { locked = true; captureAccess.invalidate(); clear() }
     @objc private func screenUnlocked() { locked = false; sampleTime = .distantPast; clear(); prepareAfterResume() }
-    @objc private func displaysChanged() { clear(); overlay.clear(discardResources: true); prepareAfterResume() }
+    @objc private func displaysChanged() { captureAccess.invalidate(); clear(); overlay.clear(discardResources: true); prepareAfterResume() }
 
     private func prepareAfterResume() {
-        guard permission, !suspended, !locked else { return }
+        guard !suspended, !locked,
+              CGPreflightScreenCaptureAccess() || UserDefaults.standard.bool(forKey: "screenPermissionWasRequested") else { return }
         Task { await verifyCaptureAccess(openSettingsOnFailure: false) }
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        // Returning from Privacy & Security should recover without requiring
+        // the user to discover a hidden retry control or restart unnecessarily.
+        if !permission { prepareAfterResume() }
     }
 
     private func tick() {
@@ -145,9 +152,10 @@ import ScreenCaptureKit
                     self.lastRender = -1
                 } catch {
                     guard self.captureGeneration == generation, !Task.isCancelled else { return }
-                    self.verifiedCaptureAccess = false
-                    self.errorMessage = error.localizedDescription
+                    self.captureAccess.fail(error)
+                    self.clear()
                     self.overlay.clear(discardResources: true)
+                    self.publishStatus()
                 }
             }
         }
@@ -203,17 +211,27 @@ import ScreenCaptureKit
     }
 
     private func publishStatus() {
-        permission = CGPreflightScreenCaptureAccess() || verifiedCaptureAccess
+        let preflight = CGPreflightScreenCaptureAccess()
+        let newlyAllowed = preflight && !lastPreflight
+        if !preflight && lastPreflight {
+            captureAccess.invalidate()
+            clear()
+            overlay.clear(discardResources: true)
+        }
+        lastPreflight = preflight
+        if newlyAllowed && !permission { prepareAfterResume() }
         let freshAngle = Date().timeIntervalSince(sampleTime) < 0.6 ? angle : nil
         let previewMessage: String? = previewStart == nil ? nil : (overlay.ready ? "Previewing on built-in display" : "Preparing screen preview")
-        let message = overlay.renderError ?? errorMessage ?? previewMessage ?? (!preferences.settings.enabled ? "Effect is turned off" : (!permission ? "Screen Recording permission needed" : (freshAngle == nil ? sensorMessage : "Ready · follows your lid")))
-        var info: [String: Any] = ["permission": permission, "message": message, "previewing": previewStart != nil, "shortcutAvailable": shortcutAvailable, "overlayVisible": overlay.visible, "renderedFrames": overlay.renderedFrames]
+        let message = locked ? "Animation paused while the Mac is locked" : (suspended ? "Animation paused while the display sleeps" : (captureAccess.message ?? overlay.renderError ?? errorMessage ?? previewMessage ?? (!preferences.settings.enabled ? "Effect is turned off" : (freshAngle == nil ? sensorMessage : "Ready · follows your lid"))))
+        let ready = permission && freshAngle != nil && preferences.settings.enabled && !locked && !suspended && errorMessage == nil && overlay.renderError == nil
+        var info: [String: Any] = ["permission": permission, "ready": ready, "captureState": captureAccess.state.rawValue, "message": message, "previewing": previewStart != nil, "shortcutAvailable": shortcutAvailable, "overlayVisible": overlay.visible, "renderedFrames": overlay.renderedFrames]
         if let freshAngle { info["angle"] = freshAngle }
         if let openAngle = motion.openAngle { info["openAngle"] = openAngle }
         info["progress"] = progress
         info["captureMilliseconds"] = overlay.captureMilliseconds
         DistributedNotificationCenter.default().postNotificationName(CladofoldID.status, object: nil, userInfo: info, deliverImmediately: true)
         statusItem.button?.toolTip = "cladofold. · \(message)" + (freshAngle.map { " · \(Int($0))°" } ?? "")
+        statusItem.button?.contentTintColor = ready ? nil : .systemOrange
     }
 
     private func setupMenu() {
@@ -232,13 +250,19 @@ import ScreenCaptureKit
         let label = NSMenuItem(title: angle.map { "cladofold. · \(Int($0))°" } ?? "cladofold.", action: nil, keyEquivalent: "")
         label.isEnabled = false
         menu.addItem(label)
+        let health = NSMenuItem(title: captureAccess.message ?? (preferences.settings.enabled ? sensorMessage : "Effect is turned off"), action: nil, keyEquivalent: "")
+        health.isEnabled = false
+        menu.addItem(health)
         let enabled = item("Enable cladofold.", action: #selector(toggleEnabled))
         enabled.state = preferences.settings.enabled ? .on : .off
         menu.addItem(enabled)
         menu.addItem(item("Settings…", action: #selector(showSettings), key: ","))
         menu.addItem(item("Open in System Settings…", action: #selector(openSystemSettings)))
         menu.addItem(item(previewStart == nil ? "Preview for 6 seconds" : "Stop preview", action: #selector(togglePreview)))
-        if !permission { menu.addItem(item("Allow Screen Recording…", action: #selector(requestPermission))) }
+        if !permission {
+            menu.addItem(item("Allow Screen Recording…", action: #selector(requestPermission)))
+            menu.addItem(item("Check again", action: #selector(recheckCaptureAccess)))
+        }
         menu.addItem(.separator())
         menu.addItem(item("Disable effect now", action: #selector(disableEffect)))
         menu.addItem(item("Quit cladofold.", action: #selector(quit), key: "q"))
@@ -315,13 +339,17 @@ import ScreenCaptureKit
         Task { await verifyCaptureAccess(openSettingsOnFailure: true) }
     }
 
+    @objc private func recheckCaptureAccess() {
+        clear()
+        Task { await verifyCaptureAccess(openSettingsOnFailure: false) }
+    }
+
     /// Validate the API we actually use. CoreGraphics preflight can remain false
     /// after a permission change even when ScreenCaptureKit is available.
     private func verifyCaptureAccess(openSettingsOnFailure: Bool) async {
-        guard !checkingCaptureAccess else { return }
-        checkingCaptureAccess = true
-        let preparationGeneration = captureGeneration
-        defer { checkingCaptureAccess = false; publishStatus() }
+        guard !suspended, !locked, let request = captureAccess.begin() else { return }
+        publishStatus()
+        defer { publishStatus() }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             guard let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }) else { throw OverlayError.noDisplay }
@@ -332,13 +360,18 @@ import ScreenCaptureKit
             configuration.showsCursor = false
             // A tiny transient frame proves capture access without saving anything.
             _ = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration)
-            verifiedCaptureAccess = true
+            guard captureAccess.isCurrent(request), !suspended, !locked else {
+                captureAccess.cancel(request)
+                return
+            }
+            try overlay.prepare(content: content)
+            guard captureAccess.succeed(request) else { return }
             errorMessage = nil
-            if preparationGeneration == captureGeneration && !suspended && !locked { try overlay.prepare(content: content) }
         } catch {
-            verifiedCaptureAccess = false
-            errorMessage = "Screen access: \(error.localizedDescription)"
-            if openSettingsOnFailure, let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            guard captureAccess.fail(error, request: request) else { return }
+            clear()
+            overlay.clear(discardResources: true)
+            if openSettingsOnFailure, captureAccess.state == .needsPermission, let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
                 NSWorkspace.shared.open(url)
             }
         }
@@ -353,6 +386,7 @@ import ScreenCaptureKit
         case "settings": showSettings()
         case "systemSettings": openSystemSettings()
         case "permission": requestPermission()
+        case "recheck": recheckCaptureAccess()
         case "preview": if previewStart == nil { togglePreview() }
         case "stopPreview": clear()
         case "disable": disableEffect()

@@ -4,6 +4,8 @@ cd "$(dirname "$0")/.."
 mkdir -p build/ModuleCache
 swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/BlurModel.swift Tests/main.swift -o build/behavior-tests
 build/behavior-tests
+swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/CaptureAccess.swift Tests/CaptureAccess/main.swift -o build/capture-access-tests
+build/capture-access-tests
 swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/BlurModel.swift Sources/Shared/BlurFilter.swift Tests/Rendering/main.swift -o build/render-tests
 build/render-tests
 

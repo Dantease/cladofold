@@ -10,6 +10,15 @@ struct SettingsView: View {
     var isPreferencePane = false
     var onCommand: ((String) -> Void)? = nil
     private let accent = Color(red: 0.14, green: 0.48, blue: 0.43)
+    private var captureLabel: String {
+        switch status.captureState {
+        case .ready: return "Screen access · verified"
+        case .checking: return "Screen access · checking"
+        case .unavailable: return "Screen access · unavailable"
+        case .unverified: return "Screen access · not checked"
+        case .needsPermission: return "Screen access · needed"
+        }
+    }
     private var angle: Double { followLid ? (status.angle ?? simulatedAngle) : simulatedAngle }
     private var progress: Double {
         if followLid { return status.progress }
@@ -36,6 +45,40 @@ struct SettingsView: View {
                         .labelsHidden().toggleStyle(.switch).tint(accent)
                         .accessibilityLabel("Enable cladofold.")
                 }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .top) {
+                        Image(systemName: status.ready ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                            .foregroundStyle(status.ready ? accent : Color.orange)
+                        Text(status.running ? status.message : "Start cladofold. to check your setup.")
+                            .font(.callout.weight(.medium)).fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                        if !status.running { Button("Start cladofold.") { sendCommand("start") } }
+                    }
+                    HStack(spacing: 16) {
+                        Label(status.angle.map { "Lid sensor · \(Int($0))° live" } ?? "Lid sensor · waiting", systemImage: "laptopcomputer")
+                        Label(captureLabel, systemImage: "rectangle.dashed.badge.record")
+                    }.font(.caption).foregroundStyle(.secondary)
+                    if status.running && !status.permission {
+                        Text(status.captureState == .unavailable ? "Keep the built-in display awake and unlocked, then check again. If the problem remains, quit and reopen cladofold." : "Enable cladofold. in Privacy & Security → Screen & System Audio Recording. Complete Touch ID or your Mac password, then accept Quit & Reopen if asked.")
+                            .font(.caption).fixedSize(horizontal: false, vertical: true)
+                        Text("Frames stay in memory on your Mac and are discarded when the effect clears.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            if status.captureState != .unavailable {
+                                Button("Open Screen Recording…") { sendCommand("permission") }
+                            }
+                            Button("Check again") { sendCommand("recheck") }
+                        }.disabled(status.captureState == .checking)
+                        if status.captureState == .needsPermission {
+                            Text("Already enabled? Quit and reopen cladofold. If an updated preview is still denied, remove only its old permission entry and add the installed app again.")
+                                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    if status.running && status.angle == nil {
+                        Button("Check sensor compatibility…") { showCompatibility = true }.buttonStyle(.link)
+                    }
+                }.padding(14).background((status.ready ? accent : Color.orange).opacity(0.065), in: RoundedRectangle(cornerRadius: 11))
 
                 VStack(spacing: 12) {
                     HStack {
@@ -113,23 +156,6 @@ struct SettingsView: View {
                     .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(.primary.opacity(0.06)))
 
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Circle().fill(status.running && status.angle != nil ? accent : Color.orange).frame(width: 7, height: 7)
-                        Text(status.running ? status.message : "cladofold. is not running").font(.callout)
-                        Spacer()
-                        if let liveAngle = status.angle { Text("\(Int(liveAngle))° live").font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary) }
-                        if !status.running { Button("Start cladofold.") { sendCommand("start") } }
-                    }
-                    if !status.permission {
-                        HStack(alignment: .top) {
-                            Image(systemName: "rectangle.dashed.badge.record").foregroundStyle(.secondary)
-                            Text("Allow Screen Recording to blur your desktop. Frames stay in memory and are discarded when the effect clears.")
-                                .font(.caption).foregroundStyle(.secondary)
-                            Spacer(minLength: 8)
-                            Button("Allow…") { sendCommand("permission") }
-                        }
-                    }
-                    Divider()
                     Toggle("Launch at login", isOn: $preferences.settings.launchAtLogin)
                     HStack {
                         Button(status.previewing ? "Stop preview" : "Preview on my screen") { sendCommand(status.previewing ? "stopPreview" : "preview") }

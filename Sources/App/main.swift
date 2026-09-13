@@ -10,7 +10,7 @@ if CommandLine.arguments.contains("--diagnose") {
     sensor.connect()
     print("Sensor: \(sensor.status)")
     print("Angle: \(sensor.read().map { "\($0)°" } ?? "unavailable")")
-    print("Screen capture permission: \(CGPreflightScreenCaptureAccess())")
+    print("Screen capture preflight: \(CGPreflightScreenCaptureAccess()) (open the app to verify capture)")
     if sensor.read() == nil { print(Compatibility.fallbackSummary) }
 } else {
     MainActor.assumeIsolated {

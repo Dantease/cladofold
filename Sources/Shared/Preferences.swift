@@ -74,6 +74,8 @@ final class RuntimeStatus: NSObject, ObservableObject {
     @Published var openAngle: Double?
     @Published var progress = 0.0
     @Published var permission = false
+    @Published var ready = false
+    @Published var captureState = CaptureAccess.State.unverified
     @Published var message = "Start cladofold. to connect your lid sensor."
     @Published var running = false
     @Published var previewing = false
@@ -86,7 +88,7 @@ final class RuntimeStatus: NSObject, ObservableObject {
         DistributedNotificationCenter.default().addObserver(self, selector: #selector(receive(_:)), name: CladofoldID.status, object: nil)
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
-            if Date().timeIntervalSince(self.lastUpdate) > 4 { self.running = false; self.angle = nil }
+            if Date().timeIntervalSince(self.lastUpdate) > 4 { self.running = false; self.ready = false; self.permission = false; self.angle = nil }
         }
     }
 
@@ -98,6 +100,8 @@ final class RuntimeStatus: NSObject, ObservableObject {
         openAngle = info["openAngle"] as? Double
         progress = info["progress"] as? Double ?? 0
         permission = info["permission"] as? Bool ?? false
+        ready = info["ready"] as? Bool ?? false
+        captureState = CaptureAccess.State(rawValue: info["captureState"] as? String ?? "") ?? .unverified
         message = info["message"] as? String ?? "Ready"
         previewing = info["previewing"] as? Bool ?? false
         shortcutAvailable = info["shortcutAvailable"] as? Bool ?? true

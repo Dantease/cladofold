@@ -17,8 +17,9 @@ The **cf.** mark follows the CladoBook icon: lowercase cream lettering, an acid-
 ## Use
 
 1. Open `~/Applications/cladofold..app`.
-2. In **System Settings → cladofold.**, choose **Allow…** and enable cladofold. in **Privacy & Security → Screen & System Audio Recording**. If macOS asks you to quit and reopen the app, accept it.
-3. Start with your lid at a comfortable working angle. Closing begins the effect from that position. Reopen to the starting angle to clear it.
+2. At the top of the app (or **System Settings → cladofold.**), choose **Open Screen Recording…** and enable cladofold. in **Privacy & Security → Screen & System Audio Recording**. Complete the Mac's authentication prompt. If macOS asks you to quit and reopen the app, accept it.
+3. Return to cladofold. Its setup card separately checks the **lid sensor** and **screen access**. Wait for **Ready · follows your lid**; use **Check again** if access has just changed. A connected sensor alone does not mean the desktop animation can run.
+4. Try **Preview on my screen**, then start with your lid at a comfortable working angle. Closing begins the effect from that position. Reopen to the starting angle to clear it.
 
 The top switch toggles the effect. **Duo fold animation** adds a hinge-anchored perspective shift, tapered black side borders that soften with the image, stronger darkening toward the outer edge, and a final fade to black. Opening reverses the same angle-driven transition. **Dark border** adjusts how far the borders reach inward; disable Duo mode to return to the original blur.
 
@@ -26,7 +27,7 @@ The top switch toggles the effect. **Duo fold animation** adds a hinge-anchored 
 
 Adjust maximum blur, darkening, smoothing, and progressive blur from the hinge. Settings save immediately and synchronize between the app and the System Settings pane. **Duo** selects the new animation with a 48 pt blur and quicker response; **Subtle**, **Balanced**, and **Dreamy** change blur, darkening, and smoothing. Presets preserve your angle thresholds and login preference.
 
-The miniature preview works without screen permission and uses the same renderer as the desktop effect on synthetic content. Drag its angle slider or enable **Follow my lid**. **Preview on my screen** runs a six-second closing/opening animation. **Control–Option–Command–B** immediately disables the effect. You can also disable it or quit from the cf. button in the menu bar.
+The miniature preview works without screen permission and uses the same renderer as the desktop effect on synthetic content. Drag its angle slider or enable **Follow my lid**. **Preview on my screen** runs a six-second closing/opening animation. **Control–Option–Command–B** immediately disables the effect. You can also disable it or quit from the cf. button in the menu bar. An orange menu-bar mark means the effect is not ready; open settings for the reason.
 
 **Launch at login** uses Apple's ServiceManagement API. Login-item approval, if required by macOS, is managed in **General → Login Items & Extensions**.
 
@@ -52,7 +53,7 @@ open "$HOME/Applications/cladofold..app"
 
 Build artifacts are in `build/cladofold..app` and `build/cladofold..prefPane`. The app embeds its pane and installs it for the current user on launch. Installation is per-user in `~/Applications` and `~/Library/PreferencePanes`; no administrator account is required. Quit cladofold. before replacing an installed build. System Settings may need to be quit and reopened after updating its pane. Local builds are ad-hoc signed; after a rebuild macOS may require Screen Recording permission again.
 
-If macOS shows cladofold. enabled but capture is still denied after a rebuild, the permission entry may refer to an older signature. In **Screen & System Audio Recording**, select **cladofold.**, remove just that entry with **−**, then use **+** to add `~/Applications/cladofold..app` again. Enable it and quit/reopen cladofold. when prompted. This refresh affects only cladofold. The app checks access with ScreenCaptureKit as well as CoreGraphics preflight; neither check bypasses macOS permission enforcement.
+If macOS shows cladofold. enabled but capture is still denied after a rebuild, the permission entry may refer to an older signature. First quit and reopen the installed app. If still denied, in **Screen & System Audio Recording**, select **cladofold.**, remove just that entry with **−**, then use **+** to add the installed app again. Enable it and quit/reopen cladofold. when prompted. This refresh affects only cladofold. The app verifies a real transient ScreenCaptureKit capture before enabling the effect; CoreGraphics preflight only signals when to recheck. A failed capture clears the overlay and surfaces recovery instructions instead of retrying indefinitely. No check bypasses macOS permission enforcement.
 
 To check hardware without showing an overlay:
 

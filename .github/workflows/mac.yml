@@ -17,6 +17,10 @@ jobs:
           mkdir -p build/ModuleCache
           swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/BlurModel.swift Tests/main.swift -o build/behavior-tests
           build/behavior-tests
+      - name: Capture permission recovery
+        run: |
+          swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/CaptureAccess.swift Tests/CaptureAccess/main.swift -o build/capture-access-tests
+          build/capture-access-tests
       - name: Universal app and System Settings pane
         run: ./Scripts/build.sh
       - name: Installation safeguards
