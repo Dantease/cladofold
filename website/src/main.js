@@ -1,5 +1,5 @@
 import './style.css';
-import { clamp, wheelOpening, touchOpening, followOpening } from './motion.js';
+import { clamp, wheelOpening, touchOpening, createOpeningMotion } from './motion.js';
 import { createScene } from './scene.js';
 
 const stage = document.querySelector('#stage');
@@ -11,7 +11,7 @@ const motionButton = document.querySelector('#motion-toggle');
 const systemMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let reduced = systemMotion.matches;
 let opening = 0;
-let target = 0;
+const motion = createOpeningMotion();
 let frame = 0;
 let lastTime = performance.now();
 let scene;
@@ -61,20 +61,22 @@ function animate(now) {
   if (!sceneReady && !unavailable) return;
   const elapsed = (now - lastTime) / 1000;
   lastTime = now;
-  opening = reduced || unavailable ? target : followOpening(opening, target, elapsed);
+  opening = motion.advance(elapsed);
   refresh();
-  if (opening !== target) schedule();
+  if (motion.moving) schedule();
 }
 function schedule() {
   if (!frame && !document.hidden) frame = requestAnimationFrame(animate);
 }
-function setOpening(value, instant = false) {
-  target = clamp(value);
-  if (instant || reduced || unavailable) opening = target;
-  if (target < 0.999 && interior.contains(document.activeElement)) document.activeElement.blur();
+function setOpening(value, instant = false, scrub = false) {
+  const immediate = instant || reduced || unavailable;
+  motion.moveTo(value, { instant: immediate, scrub });
+  if (motion.target < 0.999 && interior.contains(document.activeElement)) document.activeElement.blur();
   if (location.hash === '#inside') history.replaceState(null, '', location.pathname + location.search);
-  lastTime = performance.now();
-  refresh();
+  // Scroll events only update the target. Coalesce them into one render per
+  // display frame, without easing behind the trackpad's own motion events.
+  if (!frame) lastTime = performance.now();
+  if (immediate) { opening = motion.current; refresh(); }
   schedule();
 }
 const isControl = (element) => element instanceof Element && element.closest('dialog,button,a,input,select,textarea');
@@ -85,7 +87,7 @@ window.addEventListener('wheel', event => {
   if (event.ctrlKey || event.deltaY === 0 || document.querySelector('dialog[open]')) return;
   if (canScrollInterior(event.target, event.deltaY)) return;
   event.preventDefault();
-  setOpening(reduced ? (event.deltaY > 0 ? 1 : 0) : wheelOpening(target, event.deltaY, event.deltaMode, innerHeight));
+  setOpening(reduced ? (event.deltaY > 0 ? 1 : 0) : wheelOpening(motion.scrubOrigin, event.deltaY, event.deltaMode, innerHeight), false, true);
 }, { passive: false });
 window.addEventListener('touchstart', event => { fingerY = event.touches.length === 1 && !document.querySelector('dialog[open]') ? event.touches[0].clientY : null; }, { passive: true });
 window.addEventListener('touchmove', event => {
@@ -95,19 +97,19 @@ window.addEventListener('touchmove', event => {
   fingerY = nextY;
   if (canScrollInterior(event.target, -delta)) return;
   event.preventDefault();
-  if (delta) setOpening(reduced ? (delta < 0 ? 1 : 0) : touchOpening(target, delta));
+  if (delta) setOpening(reduced ? (delta < 0 ? 1 : 0) : touchOpening(motion.scrubOrigin, delta), false, true);
 }, { passive: false });
 window.addEventListener('touchend', () => { fingerY = null; }, { passive: true });
 window.addEventListener('keydown', event => {
   if (document.querySelector('dialog[open]') || isControl(event.target)) return;
-  const actions = { ArrowUp: target + 0.15, ArrowDown: target - 0.15, PageUp: target + 0.5, PageDown: target - 0.5, Home: 1, End: 0 };
+  const actions = { ArrowUp: motion.target + 0.15, ArrowDown: motion.target - 0.15, PageUp: motion.target + 0.5, PageDown: motion.target - 0.5, Home: 1, End: 0 };
   if (event.key in actions) { event.preventDefault(); setOpening(actions[event.key]); }
 });
 document.querySelector('#open-lid').addEventListener('click', () => setOpening(1));
 closeButton.addEventListener('click', () => setOpening(0));
 skip.addEventListener('click', event => { event.preventDefault(); setOpening(1, true); document.querySelector('.primary-download').focus(); });
-motionButton.addEventListener('click', () => { reduced = !reduced; if (reduced) setOpening(target > 0 ? 1 : 0, true); else refresh(); });
-systemMotion.addEventListener('change', event => { reduced = event.matches; if (reduced) setOpening(target > 0 ? 1 : 0, true); else refresh(); });
+motionButton.addEventListener('click', () => { reduced = !reduced; if (reduced) setOpening(motion.target > 0 ? 1 : 0, true); else refresh(); });
+systemMotion.addEventListener('change', event => { reduced = event.matches; if (reduced) setOpening(motion.target > 0 ? 1 : 0, true); else refresh(); });
 for (const [button, dialog] of [['#compatibility-open','#compatibility'],['#install-open','#installation']]) {
   document.querySelector(button).addEventListener('click', () => document.querySelector(dialog).showModal());
 }

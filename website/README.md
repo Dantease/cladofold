@@ -1,6 +1,6 @@
 # cladofold. website
 
-A Vite / Three.js static site. The articulated model and its notices are in `public/`. Only the lid of the real glTF MacBook mesh is visible. The site snapshots its own HTML into a display texture, projects it onto black, and applies a continuous progressive blur during motion. The same HTML becomes interactive at the open endpoint, with the model bezel and notch above it.
+A Vite / Three.js static site. The articulated model and its notices are in `public/`. Only the lid of the real glTF MacBook mesh is visible. The site snapshots its own HTML into a display texture, projects it onto black, and applies a continuous progressive blur during motion. The same HTML becomes interactive at the open endpoint, with the model bezel and notch above it. The lid width adapts to the viewport, leaving a 10 px outer margin on desktop or 6 px on compact screens. The controls occupy a separate 40 px strip below the frame.
 
 ## Develop
 
@@ -22,6 +22,7 @@ The development build labels the download as being prepared. Set `VITE_RELEASE_R
 - The entry prompt says “Scroll to open.” With natural trackpad scrolling, an upward finger gesture opens (positive wheel delta); the reverse closes.
 - On touchscreens, swipe upward to open and downward to close.
 - Arrow Up/Down move the lid, Page Up/Down move farther, Home opens, End closes when focus is outside a control.
+- Scroll and touch events update the lid directly on the next animation frame. The browser’s own momentum events are preserved; the site adds no trailing easing. Button and keyboard actions retain a short animation, which a new gesture interrupts from the visible angle.
 - The cue is also a button. “Open without animation” goes directly to the downloads.
 - Reduced motion follows the system preference and has an explicit toggle. WebGL failure reveals ordinary download controls.
 - Short screens allow the content inside the display to scroll while the lid stays open; a closing gesture folds after the content reaches its top edge.

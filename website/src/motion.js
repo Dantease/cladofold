@@ -16,3 +16,22 @@ export function followOpening(current, target, seconds) {
   const next = current + (target - current) * (1 - Math.exp(-Math.min(seconds, 0.05) * 25));
   return Math.abs(next - target) < 0.0001 ? target : next;
 }
+
+export function createOpeningMotion() {
+  let current = 0, target = 0, direct = false;
+  return {
+    get current() { return current; },
+    get target() { return target; },
+    get scrubOrigin() { return direct ? target : current; },
+    get moving() { return current !== target; },
+    moveTo(value, { scrub = false, instant = false } = {}) {
+      target = clamp(value);
+      direct = scrub;
+      if (instant) current = target;
+    },
+    advance(seconds) {
+      current = direct ? target : followOpening(current, target, seconds);
+      return current;
+    },
+  };
+}

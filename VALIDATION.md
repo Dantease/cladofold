@@ -30,3 +30,9 @@ Eight website tests pass, covering the corrected natural-trackpad/touch gesture 
 Browser review covered the lid without the base or keyboard, continuous frosted text and soft dark borders at partial opening, the live HTML handoff, and return to the black entry. Scrolling over the opening cue now starts the reveal. Desktop (1440×900), phone (390×844), and compact phone (320×568) layouts were checked. Compact content scrolls to the footer while the lid remains open; dialogs and reduced-motion controls work. The final local browser session reported no warnings or errors. Real-device touch and GPU performance remain untested.
 
 This change affects the website only; the native 1.3.0 runtime acceptance limits above still apply.
+
+## Website framing and direct scrolling follow-up — September 13, 2026
+
+Eleven website motion tests pass. New regression cases cover coalescing several gesture events into one exact frame update, holding the angle when input ends, direct touch response across frame rates, and reversing an unfinished button animation from its current visible angle. Input handlers no longer render the old angle before scheduling the next frame or restart the animation clock on every event.
+
+Browser checks confirmed the tighter open frame at 1440×900, 855×998, 390×844, and 320×568. A partial opening held at 9% without a trailing change; a later closing gesture reached 50% and held there. The progressive blur still renders during the fold, closing returns to black, compact content can scroll to its footer, and reduced-motion open/close controls reach their endpoints. The final local browser checks reported no console warnings or errors. This verifies browser event handling; physical trackpad feel remains a user acceptance check.

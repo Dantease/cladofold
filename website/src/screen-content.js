@@ -26,7 +26,9 @@ export async function screenContent(interior, bounds, wallpaper) {
       style: { position: 'relative', left: '0', top: '0', margin: '0', visibility: 'visible', opacity: '1', transform: 'none' },
     });
     const canvas = document.createElement('canvas');
-    canvas.width = 1536; canvas.height = Math.round(1536*bounds.height/bounds.width);
+    const resolution = Math.min(devicePixelRatio, 1.5, 1536/Math.max(bounds.width,bounds.height));
+    canvas.width = Math.round(bounds.width*resolution);
+    canvas.height = Math.round(bounds.height*resolution);
     const context = canvas.getContext('2d');
     context.drawImage(wallpaper,0,0,canvas.width,canvas.height);
     context.fillStyle = 'rgba(8,17,30,.28)'; context.fillRect(0,0,canvas.width,canvas.height);
