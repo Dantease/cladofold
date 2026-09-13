@@ -19,25 +19,52 @@ export function foldState(opening) {
   // the physical fold. Both directions trace exactly the same visible state.
   return { effect, tilt: 1.55334 * Math.pow(effect, 1.8) };
 }
-export function followOpening(current, target, seconds) {
-  const next = current + (target - current) * (1 - Math.exp(-Math.min(seconds, 0.05) * 25));
-  return Math.abs(next - target) < 0.0001 ? target : next;
+export function followOpening(current, target, seconds, tolerance = 0.0001) {
+  const next = current + (target - current) * (1 - Math.exp(-Math.max(0, Math.min(seconds, 0.05)) * 15));
+  return Math.abs(next - target) < tolerance ? target : next;
 }
 
-export function createOpeningMotion() {
-  let current = 0, target = 0, direct = false;
+// The fold and the page share one travel distance. This avoids a second easing
+// tail and keeps the lid open until the visible content reaches the top.
+export function createDisplayMotion() {
+  const foldTravel = 1100;
+  let current = 0, target = 0, direction = 0;
   return {
     get current() { return current; },
     get target() { return target; },
-    get scrubOrigin() { return direct ? target : current; },
+    get opening() { return clamp(current / foldTravel); },
+    get targetOpening() { return clamp(target / foldTravel); },
+    get scrollTop() { return Math.max(0, current - foldTravel); },
     get moving() { return current !== target; },
-    moveTo(value, { scrub = false, instant = false } = {}) {
-      target = clamp(value);
-      direct = scrub;
+    scroll(delta, maximumScroll, foldDistance = foldTravel, instant = false) {
+      if (!delta) return;
+      const nextDirection = Math.sign(delta);
+      // A reversal starts from what is visible, with no old momentum to fight.
+      if (direction !== nextDirection) target = current;
+      direction = nextDirection;
+      const next = scrollDestination(clamp(target / foldTravel), Math.max(0, target - foldTravel), maximumScroll, delta, foldDistance);
+      target = next.opening * foldTravel + next.scrollTop;
+      if (instant) {
+        if (target < foldTravel) target = nextDirection > 0 ? foldTravel : 0;
+        current = target;
+      }
+    },
+    open(value, instant = false) {
+      current = Math.min(current, foldTravel);
+      target = clamp(value) * foldTravel;
+      direction = 0;
       if (instant) current = target;
     },
+    scrollTo(value, maximumScroll, instant = false) {
+      target = foldTravel + clamp(value, 0, Math.max(0, maximumScroll));
+      direction = 0;
+      if (instant) current = target;
+    },
+    syncScroll(value) { current = target = foldTravel + Math.max(0, value); direction = 0; },
+    bound(maximumScroll) { current = Math.min(current, foldTravel + Math.max(0, maximumScroll)); target = Math.min(target, foldTravel + Math.max(0, maximumScroll)); },
+    finish() { current = target = target > 0 && target < foldTravel ? foldTravel : target; },
     advance(seconds) {
-      current = direct ? target : followOpening(current, target, seconds);
+      current = followOpening(current, target, seconds, 0.35);
       return current;
     },
   };

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { wheelOpening, touchOpening, followOpening, foldState, createOpeningMotion } from '../src/motion.js';
+import { wheelOpening, touchOpening, followOpening, foldState } from '../src/motion.js';
 
 test('natural trackpad swipe up opens, swipe down closes, and reversing returns to the same angle', () => {
   const open = wheelOpening(0, 440);
@@ -28,40 +28,6 @@ test('button animation is independent of 60Hz versus 120Hz frames', () => {
   assert.ok(Math.abs(a-b)<0.00001);
 });
 
-test('multiple scroll events reach their exact combined position on the next frame, without a tail', () => {
-  const motion = createOpeningMotion();
-  for (const delta of [110, 220, 110]) {
-    motion.moveTo(wheelOpening(motion.scrubOrigin, delta), { scrub: true });
-  }
-  assert.equal(motion.current, 0);
-  assert.equal(motion.advance(1/120), 0.4);
-  assert.equal(motion.moving, false);
-  assert.equal(motion.advance(1), 0.4);
-});
-
-test('a closing gesture immediately reverses an unfinished button opening from its visible position', () => {
-  const motion = createOpeningMotion();
-  motion.moveTo(1);
-  const before = motion.advance(1/60);
-  assert.ok(before > 0 && before < 1);
-  motion.moveTo(wheelOpening(motion.scrubOrigin, -110), { scrub: true });
-  assert.ok(Math.abs(motion.advance(1/120) - (before - 0.1)) < 1e-12);
-  assert.equal(motion.moving, false);
-});
-
-test('direct touch input stays synchronized across different rendering frame rates', () => {
-  for (const eventsPerFrame of [1, 2, 4]) {
-    const motion = createOpeningMotion();
-    for (let i=0; i<40; i++) {
-      motion.moveTo(touchOpening(motion.scrubOrigin, -5.5), { scrub: true });
-      if ((i+1)%eventsPerFrame === 0) motion.advance(eventsPerFrame/120);
-    }
-    assert.ok(Math.abs(motion.current - 0.4) < 1e-12);
-    motion.moveTo(touchOpening(motion.scrubOrigin, 55), { scrub: true });
-    assert.ok(Math.abs(motion.advance(1/120) - 0.3) < 1e-12);
-    assert.equal(motion.moving, false);
-  }
-});
 test('opening settles to a usable exact endpoint and closing returns fully black', () => {
   let value=0;
   for(let i=0;i<60;i++) value=followOpening(value,1,1/60);

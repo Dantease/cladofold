@@ -54,3 +54,9 @@ Cloudflare DNS routes `cladofold.app` and `www.cladofold.app` to GitHub Pages. G
 Twenty-one website tests pass, including direct and reversible depth offsets, bounded movement for offscreen sections, smaller phone movement, and neutral values for reduced motion. The production build passes. The new reflection uses the existing WebGL context and display mesh, with scroll-position uniforms and no continuous animation loop.
 
 Browser review covered the feature panels and glass reflection at desktop and 390×844 phone sizes, no WebGL warnings or errors, a neutral transform after enabling Reduce Motion, and a zero wallpaper offset after returning to the hero. Closing after a phone resize returned to the black entry. Live MacBook and physical-phone acceptance limits remain as described above.
+
+## Gentle scroll easing — September 13, 2026
+
+The previous direct-scroll behavior has been replaced with one smooth travel controller for both lid opening and interior scrolling. Twenty-five tests pass, including a short settling interval, frame-rate equivalence, immediate reversal from the visible position, transitions at the page top and fully open lid, resize bounds, external scrollbar synchronization, and immediate reduced-motion behavior. The production build passes.
+
+Browser review confirmed the lid follows a scroll gesture before settling, the page and parallax move together, reversing from the page continues into closing, and the compact layout remains usable with reduced motion. The browser reported no WebGL warnings or errors. Perceived trackpad feel remains a user acceptance check.

@@ -24,7 +24,7 @@ The development build labels the download as being prepared. Set `VITE_RELEASE_R
 - The entry prompt says “Scroll to open.” With natural trackpad scrolling, an upward finger gesture opens (positive wheel delta); the reverse closes.
 - On touchscreens, swipe upward to open and downward to close.
 - Arrow Up/Down move the lid, Page Up/Down move farther, Home opens, End closes when focus is outside a control.
-- Scroll and touch events update the lid directly on the next animation frame. The browser’s own momentum events are preserved; the site adds no trailing easing. Button and keyboard actions retain a short animation, which a new gesture interrupts from the visible angle.
+- Scroll, touch, buttons, and keyboard navigation share one gentle exponential easing curve across the lid and interior page. The response has a roughly 67 ms time constant, catching up about 95% in 200 ms. Reversing a gesture starts from the visible position. Page content reaches its top before closing begins, and the reveal completes before content scrolls. Reduce Motion bypasses the easing.
 - The cue is also a button. “Open without animation” goes directly to the downloads.
 - Reduced motion follows the system preference and has an explicit toggle. WebGL failure reveals ordinary download controls.
 - Once the lid opens, scrolling explores appearance controls, lid-response settings, and the download footer inside the display. A closing gesture folds only after the page reaches its top edge.
