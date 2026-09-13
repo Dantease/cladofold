@@ -48,3 +48,9 @@ Browser review covered the looser headline and italic serif pairing, appearance 
 The star-confirmation requirement above has been removed. Eighteen website tests and the production build pass. Available release links use normal browser downloads immediately; the optional star prompt is nonmodal, keeps focus on the clicked link, and appears only once per page visit. Browser checks used the real download module with a harmless local test file to exercise the available-release path at desktop and 390-pixel phone widths. Dismissal prevented the prompt from returning on another download click. The unpublished-release path showed preparation information without a star request. The temporary test fixture was removed before publication.
 
 Cloudflare DNS routes `cladofold.app` and `www.cladofold.app` to GitHub Pages. GitHub's DNS check succeeded, the certificate includes both hostnames, and HTTPS enforcement is enabled. The apex returned HTTP 200 over valid HTTPS. The native app's remaining runtime acceptance checks are unchanged.
+
+## WebGL reflections and scroll parallax — September 13, 2026
+
+Twenty-one website tests pass, including direct and reversible depth offsets, bounded movement for offscreen sections, smaller phone movement, and neutral values for reduced motion. The production build passes. The new reflection uses the existing WebGL context and display mesh, with scroll-position uniforms and no continuous animation loop.
+
+Browser review covered the feature panels and glass reflection at desktop and 390×844 phone sizes, no WebGL warnings or errors, a neutral transform after enabling Reduce Motion, and a zero wallpaper offset after returning to the hero. Closing after a phone resize returned to the black entry. Live MacBook and physical-phone acceptance limits remain as described above.

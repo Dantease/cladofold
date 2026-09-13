@@ -63,11 +63,23 @@ export function createFoldRenderer(renderer) {
       }`,
   });
   const display = new THREE.ShaderMaterial({
-    uniforms: { source: { value: targets[2].texture }, fold: { value: 0 }, live: { value: false } },
+    uniforms: { source: { value: targets[2].texture }, fold: { value: 0 }, live: { value: false }, scrollPhase: { value: 0 }, scrollGlow: { value: 0 } },
     vertexShader: `varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-    fragmentShader: `uniform sampler2D source; uniform float fold; uniform bool live; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D source; uniform float fold; uniform bool live;
+      uniform float scrollPhase; uniform float scrollGlow; varying vec2 vUv;
       void main() {
-        if (live) { gl_FragColor = vec4(0.0); return; }
+        if (live) {
+          // Soft glass reflections use the existing display mesh and context.
+          // Their phase comes only from scroll position; there is no idle loop.
+          float curve = vUv.x + 0.22 * sin(vUv.y * 4.5 + scrollPhase * 5.0);
+          float ribbon = exp(-pow((curve - mix(-0.15, 1.15, scrollPhase)) * 5.5, 2.0));
+          float halo = exp(-pow((curve - mix(0.85, 0.15, scrollPhase)) * 2.8, 2.0));
+          float alpha = (ribbon * 0.09 + halo * 0.025) * scrollGlow;
+          vec3 tint = mix(vec3(0.58, 0.76, 0.91), vec3(0.78, 0.90, 0.57), scrollPhase);
+          // The transparent canvas composites premultiplied color over the HTML.
+          gl_FragColor = vec4(tint * alpha, alpha);
+          return;
+        }
         vec3 color = texture2D(source, vUv).rgb;
         float p = fold;
         float closure = 1.0 - smoothstep(0.86, 1.0, p);

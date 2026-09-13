@@ -29,6 +29,7 @@ export function createScene(container, interior, onReady, onFailure) {
   let model,lid,screen,wallpaper,bounds,topCanvas;
   let viewWidth=innerWidth,viewHeight=innerHeight-40,openDistance=6,lastOpening=0,lastInteractive=false;
   let disposed=false,failed=false,ready=false,contentGeneration=0,resizeTimer;
+  let lastDepth={phase:0,strength:0};
 
   function positionCamera() {
     camera.position.copy(frameCenter).addScaledVector(normal,openDistance);
@@ -96,13 +97,16 @@ export function createScene(container, interior, onReady, onFailure) {
       console.error('Could not prepare the display content.',error);failed=true;onFailure();
     }
   }
-  function render(opening,interactive=false) {
+  function render(opening,interactive=false,depth=lastDepth) {
     lastOpening=opening;lastInteractive=interactive;
+    lastDepth=depth;
     if(disposed || failed || !ready) return;
     const state=foldState(opening);
     lid.rotation.x=state.tilt;
     // Keep the real bezel and notch over the live HTML once fully open.
     fold.material.uniforms.live.value=interactive;
+    fold.material.uniforms.scrollPhase.value=depth.phase;
+    fold.material.uniforms.scrollGlow.value=depth.strength;
     world.updateMatrixWorld(true);
     fold.render(state.effect);
     renderer.render(world,camera);

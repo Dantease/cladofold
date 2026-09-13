@@ -13,6 +13,9 @@ export async function screenContent(interior, bounds, wallpaper, scrollTop = int
   clone.classList.add('ready');
   clone.inert = true;
   clone.setAttribute('aria-hidden', 'true');
+  // A resize can rebuild the cached hero while the visitor is farther down.
+  // Its wallpaper must represent the top position used when closing the lid.
+  if (scrollTop === 0) clone.querySelector('.hero-screen')?.style.setProperty('--hero-depth', '0px');
   const staging = document.createElement('div');
   Object.assign(staging.style, { position: 'fixed', left: '-20000px', top: '0', pointerEvents: 'none' });
   Object.assign(clone.style, {

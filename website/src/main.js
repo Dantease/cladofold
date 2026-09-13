@@ -4,6 +4,7 @@ import { clamp, wheelPixels, scrollDestination, createOpeningMotion } from './mo
 import { createScene } from './scene.js';
 import { setupDownloads } from './download-flow.js';
 import { setupFeaturePreviews } from './feature-previews.js';
+import { createScrollEffects } from './scroll-effects.js';
 
 const stage = document.querySelector('#stage');
 const interior = document.querySelector('#inside');
@@ -21,6 +22,7 @@ let scene;
 let sceneReady = false;
 let fingerY = null;
 let unavailable = false;
+const scrollEffects = createScrollEffects(interior, schedule);
 document.querySelector('#phone-note').hidden = !/iPhone|iPad|Android/i.test(navigator.userAgent);
 
 const release = 'https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg';
@@ -49,7 +51,8 @@ function refresh() {
   motionButton.textContent = reduced ? 'Enable motion' : 'Reduce motion';
   document.querySelector('#fold-state').textContent = closed ? 'MacBook closed' : opened ? 'MacBook open' : `MacBook ${Math.round(opening * 100)}% open`;
   document.body.dataset.opening = String(Math.round(opening * 100));
-  scene?.render(opening, opened);
+  const depth = scrollEffects.update(opened && !reduced && !unavailable);
+  scene?.render(opening, opened, depth);
 }
 function animate(now) {
   frame = 0;
@@ -127,7 +130,7 @@ document.querySelector('.explore-cue').addEventListener('click', event => { even
 document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); interior.scrollTo({ top: 0, behavior: reduced ? 'instant' : 'smooth' }); });
 let contentTimer;
 setupFeaturePreviews(() => { clearTimeout(contentTimer); contentTimer = setTimeout(() => scene?.refreshTexture(), 180); });
-interior.addEventListener('scroll', () => { clearTimeout(contentTimer); contentTimer = setTimeout(() => scene?.refreshTexture(), 120); }, { passive: true });
+interior.addEventListener('scroll', () => { schedule(); clearTimeout(contentTimer); contentTimer = setTimeout(() => scene?.refreshTexture(), 120); }, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.hidden && frame) { cancelAnimationFrame(frame); frame = 0; } else { lastTime = performance.now(); schedule(); } });
-window.addEventListener('pagehide', event => { if (!event.persisted) scene?.dispose(); });
+window.addEventListener('pagehide', event => { if (!event.persisted) { scrollEffects.dispose(); scene?.dispose(); } });
 if (location.hash === '#inside') setOpening(1, true); else refresh();

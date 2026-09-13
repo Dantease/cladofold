@@ -29,6 +29,7 @@ The development build labels the download as being prepared. Set `VITE_RELEASE_R
 - Reduced motion follows the system preference and has an explicit toggle. WebGL failure reveals ordinary download controls.
 - Once the lid opens, scrolling explores appearance controls, lid-response settings, and the download footer inside the display. A closing gesture folds only after the page reaches its top edge.
 - Appearance presets and sliders update a small browser preview; the response switches explain the real native-app settings. They do not change the visitor’s Mac.
+- The open display has scroll-driven depth: a slower hero wallpaper, small opposing offsets for feature copy and settings panels, and a soft glass reflection rendered by the existing WebGL display material. Reflections follow page position, with no timer or idle animation. Phone movement is halved; Reduce Motion disables both parallax and the WebGL reflection.
 - While open, arrow keys, Page Up/Down, and Space browse the content; Home and End go to its top and footer.
 
 The headline pairs the system sans-serif with a Georgia italic second line. The site loads no analytics, custom fonts, or third-party scripts. GitHub hosts the app downloads. The display snapshot captures only this site’s content; it does not request screen access. Browser events redraw the scene only while it changes; device pixel ratio is capped at 1.5.
