@@ -13,7 +13,9 @@ npm run dev
 npm run build
 ```
 
-Build output is `dist/`. Relative asset URLs support a GitHub Pages project path or a later custom domain. No domain purchase or DNS configuration is part of this build.
+Build output is `dist/`. Relative asset URLs support both a GitHub Pages project path and the production domain, [cladofold.app](https://cladofold.app/).
+
+GitHub Pages deploys this directory through the repository's Actions workflow. Cloudflare manages DNS: the apex and `www` are DNS-only CNAME records targeting `dantease.github.io`; Cloudflare flattens the apex record. The repository's Pages custom domain is `cladofold.app`. GitHub provides the HTTPS certificate and redirects `www` to the apex. Actions deployments do not require a `CNAME` file in the build output.
 
 The development build labels the download as being prepared. Set `VITE_RELEASE_READY=true` only when the pinned release asset in `src/main.js` exists. The Pages workflow verifies that asset before enabling the production link.
 

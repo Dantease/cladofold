@@ -8,7 +8,7 @@ Run `./Scripts/package.sh --preview` to generate a universal DMG and ZIP in `dis
 
 **The app name is exactly `cladofold.`**, lowercase with a trailing period. Its on-disk filename is consequently `cladofold..app`. Internal bundle identifiers retain the old name to preserve existing preferences through the upgrade.
 
-Current packages are **unnotarized previews**. This build machine has no Developer ID certificate, so recipients may need Apple's app-specific **Open Anyway** flow. See [recipient instructions](Distribution/READ-ME.txt) and the [compatibility report and notarization workflow](Distribution/COMPATIBILITY.md). Find [preview downloads](https://github.com/Dantease/cladofold/releases), or visit the [interactive website](https://dantease.github.io/cladofold/).
+Current packages are **unnotarized previews**. This build machine has no Developer ID certificate, so recipients may need Apple's app-specific **Open Anyway** flow. See [recipient instructions](Distribution/READ-ME.txt) and the [compatibility report and notarization workflow](Distribution/COMPATIBILITY.md). Find [preview downloads](https://github.com/Dantease/cladofold/releases), or visit the [interactive website](https://cladofold.app/).
 
 ## App icon
 
