@@ -25,8 +25,16 @@ The development build labels the download as being prepared. Set `VITE_RELEASE_R
 - Scroll and touch events update the lid directly on the next animation frame. The browser’s own momentum events are preserved; the site adds no trailing easing. Button and keyboard actions retain a short animation, which a new gesture interrupts from the visible angle.
 - The cue is also a button. “Open without animation” goes directly to the downloads.
 - Reduced motion follows the system preference and has an explicit toggle. WebGL failure reveals ordinary download controls.
-- Short screens allow the content inside the display to scroll while the lid stays open; a closing gesture folds after the content reaches its top edge.
+- Once the lid opens, scrolling explores appearance controls, lid-response settings, and the download footer inside the display. A closing gesture folds only after the page reaches its top edge.
+- Appearance presets and sliders update a small browser preview; the response switches explain the real native-app settings. They do not change the visitor’s Mac.
+- While open, arrow keys, Page Up/Down, and Space browse the content; Home and End go to its top and footer.
 
-The site loads no analytics, custom fonts, or third-party scripts. GitHub hosts the app downloads. The display snapshot captures only this site’s content; it does not request screen access. Browser events redraw the scene only while it changes; device pixel ratio is capped at 1.5.
+The headline pairs the system sans-serif with a Georgia italic second line. The site loads no analytics, custom fonts, or third-party scripts. GitHub hosts the app downloads. The display snapshot captures only this site’s content; it does not request screen access. Browser events redraw the scene only while it changes; device pixel ratio is capped at 1.5.
 
 The model is CC BY 4.0. Preserve visible credit and `public/MODEL-LICENSE.txt` when sharing it. JavaScript source is MIT-licensed.
+
+## Star-before-download flow
+
+All download actions open one dialog. When the release is available, visitors can open the GitHub repository and explicitly confirm “I’ve starred cladofold. on GitHub” before continuing. This is an honor-system confirmation, not authenticated star verification. Opening the repository never counts as a star. The site collects no GitHub username, token, or account data and remembers confirmation only in page memory. Public GitHub releases remain directly accessible outside this site.
+
+If the release is unavailable, the dialog shows “Preview coming soon” and cannot navigate to the missing artifact, even if a star was confirmed. The release-ready flag remains controlled by the Pages build’s artifact check.

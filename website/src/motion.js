@@ -1,11 +1,18 @@
 export const clamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
 export const ease = (value) => { const t = clamp(value); return t * t * (3 - 2 * t); };
+export const wheelPixels = (deltaY, deltaMode = 0, viewportHeight = 800) => deltaY * (deltaMode === 1 ? 16 : deltaMode === 2 ? viewportHeight : 1);
 export function wheelOpening(opening, deltaY, deltaMode = 0, viewportHeight = 800) {
-  const pixels = deltaY * (deltaMode === 1 ? 16 : deltaMode === 2 ? viewportHeight : 1);
+  const pixels = wheelPixels(deltaY, deltaMode, viewportHeight);
   // Natural scrolling: moving two fingers upward produces positive wheel delta.
   return clamp(opening + pixels / 1100);
 }
 export function touchOpening(opening, fingerDeltaY) { return clamp(opening - fingerDeltaY / 550); }
+export function scrollDestination(opening, scrollTop, maximumScroll, delta, foldDistance = 1100) {
+  if (opening < 0.999) return { opening: clamp(opening + delta/foldDistance), scrollTop };
+  const nextTop = clamp(scrollTop + delta, 0, Math.max(0,maximumScroll));
+  const remaining = delta - (nextTop-scrollTop);
+  return { opening: remaining < 0 ? clamp(1 + remaining/foldDistance) : 1, scrollTop: nextTop };
+}
 export function foldState(opening) {
   const effect = 1 - clamp(opening);
   // Keep the display facing the visitor while the frost clears, then finish

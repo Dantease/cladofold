@@ -36,3 +36,9 @@ This change affects the website only; the native 1.3.0 runtime acceptance limits
 Eleven website motion tests pass. New regression cases cover coalescing several gesture events into one exact frame update, holding the angle when input ends, direct touch response across frame rates, and reversing an unfinished button animation from its current visible angle. Input handlers no longer render the old angle before scheduling the next frame or restart the animation clock on every event.
 
 Browser checks confirmed the tighter open frame at 1440×900, 855×998, 390×844, and 320×568. A partial opening held at 9% without a trailing change; a later closing gesture reached 50% and held there. The progressive blur still renders during the fold, closing returns to black, compact content can scroll to its footer, and reduced-motion open/close controls reach their endpoints. The final local browser checks reported no console warnings or errors. This verifies browser event handling; physical trackpad feel remains a user acceptance check.
+
+## Website typography, features, and download flow — September 13, 2026
+
+Eighteen tests pass. New cases cover switching from lid movement to interior page scrolling, consuming only the remaining gesture beyond the page top when closing, keeping the lid open at the footer, requiring explicit star confirmation for an available release, and preventing confirmation from exposing a draft download.
+
+Browser review covered the looser headline and italic serif pairing, appearance presets and range inputs, response switches, mobile feature sections, footer download routing, and the unavailable-release dialog. The star step is self-confirmed; authenticated GitHub star verification is not implemented. The native app’s release remains gated by the runtime acceptance checks above.

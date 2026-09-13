@@ -1,6 +1,9 @@
 import './style.css';
-import { clamp, wheelOpening, touchOpening, createOpeningMotion } from './motion.js';
+import './features.css';
+import { clamp, wheelPixels, scrollDestination, createOpeningMotion } from './motion.js';
 import { createScene } from './scene.js';
+import { setupDownloads } from './download-flow.js';
+import { setupFeaturePreviews } from './feature-previews.js';
 
 const stage = document.querySelector('#stage');
 const interior = document.querySelector('#inside');
@@ -21,15 +24,7 @@ let unavailable = false;
 document.querySelector('#phone-note').hidden = !/iPhone|iPad|Android/i.test(navigator.userAgent);
 
 const release = 'https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg';
-if (import.meta.env.VITE_RELEASE_READY === 'true') {
-  document.querySelectorAll('.download-link').forEach(link => { link.href = release; });
-} else {
-  document.querySelectorAll('.download-link').forEach(link => {
-    link.setAttribute('aria-disabled', 'true');
-    link.addEventListener('click', event => { event.preventDefault(); document.querySelector('#installation').showModal(); });
-  });
-  document.querySelector('.release-note').textContent = 'The new preview is being prepared';
-}
+setupDownloads(import.meta.env.VITE_RELEASE_READY === 'true', release);
 
 function failScene() {
   unavailable = true;
@@ -42,6 +37,7 @@ try { scene = createScene(stage, interior, () => { sceneReady = true; lastTime =
 function refresh() {
   const opened = opening >= 0.999;
   const closed = opening < 0.002;
+  if (closed && interior.scrollTop > 0) { interior.scrollTop = 0; scene?.restoreTopTexture(); }
   intro.classList.toggle('leaving', !closed);
   interior.classList.toggle('ready', opened);
   interior.inert = !opened;
@@ -80,28 +76,37 @@ function setOpening(value, instant = false, scrub = false) {
   schedule();
 }
 const isControl = (element) => element instanceof Element && element.closest('dialog,button,a,input,select,textarea');
-// At short viewport heights, keep all content reachable before closing the lid.
-const canScrollInterior = (element, delta) => opening >= 0.999 && interior.contains(element)
-  && (delta > 0 ? interior.scrollTop + interior.clientHeight < interior.scrollHeight - 1 : interior.scrollTop > 0);
+// After the reveal, the same gesture scrolls the page inside the display.
+// Only an upward page scroll beyond the content's top edge begins closing.
+function scrollDisplay(delta, foldDistance = 1100) {
+  const next = scrollDestination(motion.scrubOrigin, interior.scrollTop, interior.scrollHeight-interior.clientHeight, delta, foldDistance);
+  interior.scrollTop = next.scrollTop;
+  if (next.opening < 0.999 && opening >= 0.999 && next.scrollTop === 0) scene?.restoreTopTexture();
+  if (next.opening !== opening || motion.moving) setOpening(reduced ? (next.opening > opening ? 1 : 0) : next.opening, false, true);
+}
 window.addEventListener('wheel', event => {
   if (event.ctrlKey || event.deltaY === 0 || document.querySelector('dialog[open]')) return;
-  if (canScrollInterior(event.target, event.deltaY)) return;
   event.preventDefault();
-  setOpening(reduced ? (event.deltaY > 0 ? 1 : 0) : wheelOpening(motion.scrubOrigin, event.deltaY, event.deltaMode, innerHeight), false, true);
+  scrollDisplay(wheelPixels(event.deltaY, event.deltaMode, innerHeight));
 }, { passive: false });
-window.addEventListener('touchstart', event => { fingerY = event.touches.length === 1 && !document.querySelector('dialog[open]') ? event.touches[0].clientY : null; }, { passive: true });
+window.addEventListener('touchstart', event => { fingerY = event.touches.length === 1 && !event.target.closest('input') && !document.querySelector('dialog[open]') ? event.touches[0].clientY : null; }, { passive: true });
 window.addEventListener('touchmove', event => {
   if (fingerY === null || event.touches.length !== 1 || document.querySelector('dialog[open]')) return;
   const nextY = event.touches[0].clientY;
   const delta = nextY - fingerY;
   fingerY = nextY;
-  if (canScrollInterior(event.target, -delta)) return;
   event.preventDefault();
-  if (delta) setOpening(reduced ? (delta < 0 ? 1 : 0) : touchOpening(motion.scrubOrigin, delta), false, true);
+  if (delta) scrollDisplay(-delta, 550);
 }, { passive: false });
 window.addEventListener('touchend', () => { fingerY = null; }, { passive: true });
 window.addEventListener('keydown', event => {
   if (document.querySelector('dialog[open]') || isControl(event.target)) return;
+  if (opening >= 0.999) {
+    if (event.key === 'Home') { event.preventDefault(); interior.scrollTop = 0; return; }
+    if (event.key === 'End') { event.preventDefault(); interior.scrollTop = interior.scrollHeight; return; }
+    const distances = { ArrowDown: 60, ArrowUp: -60, PageDown: interior.clientHeight*.85, PageUp: -interior.clientHeight*.85, ' ': interior.clientHeight*.85*(event.shiftKey?-1:1) };
+    if (event.key in distances) { event.preventDefault(); scrollDisplay(distances[event.key]); return; }
+  }
   const actions = { ArrowUp: motion.target + 0.15, ArrowDown: motion.target - 0.15, PageUp: motion.target + 0.5, PageDown: motion.target - 0.5, Home: 1, End: 0 };
   if (event.key in actions) { event.preventDefault(); setOpening(actions[event.key]); }
 });
@@ -110,15 +115,18 @@ closeButton.addEventListener('click', () => setOpening(0));
 skip.addEventListener('click', event => { event.preventDefault(); setOpening(1, true); document.querySelector('.primary-download').focus(); });
 motionButton.addEventListener('click', () => { reduced = !reduced; if (reduced) setOpening(motion.target > 0 ? 1 : 0, true); else refresh(); });
 systemMotion.addEventListener('change', event => { reduced = event.matches; if (reduced) setOpening(motion.target > 0 ? 1 : 0, true); else refresh(); });
-for (const [button, dialog] of [['#compatibility-open','#compatibility'],['#install-open','#installation']]) {
-  document.querySelector(button).addEventListener('click', () => document.querySelector(dialog).showModal());
+for (const [button, dialog] of [['#compatibility-open','#compatibility'],['#footer-compatibility','#compatibility'],['#install-open','#installation']]) {
+  document.querySelector(button).addEventListener('click', () => { document.querySelectorAll('dialog[open]').forEach(open => open.close()); document.querySelector(dialog).showModal(); });
 }
 document.querySelectorAll('dialog').forEach(dialog => {
   dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
 });
 window.addEventListener('resize', () => { scene?.resize(); refresh(); });
+document.querySelector('.explore-cue').addEventListener('click', event => { event.preventDefault(); interior.scrollTo({ top: document.querySelector('#features').offsetTop, behavior: reduced ? 'instant' : 'smooth' }); });
+document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); interior.scrollTo({ top: 0, behavior: reduced ? 'instant' : 'smooth' }); });
 let contentTimer;
+setupFeaturePreviews(() => { clearTimeout(contentTimer); contentTimer = setTimeout(() => scene?.refreshTexture(), 180); });
 interior.addEventListener('scroll', () => { clearTimeout(contentTimer); contentTimer = setTimeout(() => scene?.refreshTexture(), 120); }, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.hidden && frame) { cancelAnimationFrame(frame); frame = 0; } else { lastTime = performance.now(); schedule(); } });
 window.addEventListener('pagehide', event => { if (!event.persisted) scene?.dispose(); });

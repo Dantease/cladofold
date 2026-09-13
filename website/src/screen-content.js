@@ -2,10 +2,13 @@ import { toCanvas } from 'html-to-image';
 
 // Snapshot only this site's own content. This does not access the visitor's
 // desktop, other tabs, or any browser screen-capture API.
-export async function screenContent(interior, bounds, wallpaper) {
+export async function screenContent(interior, bounds, wallpaper, scrollTop = interior.scrollTop) {
   const rect = interior.getBoundingClientRect();
   const clone = interior.cloneNode(true);
   clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+  clone.querySelectorAll('[for],[aria-labelledby],[aria-describedby],[aria-controls]').forEach(node => {
+    for (const attribute of ['for','aria-labelledby','aria-describedby','aria-controls']) node.removeAttribute(attribute);
+  });
   clone.removeAttribute('id');
   clone.classList.add('ready');
   clone.inert = true;
@@ -16,7 +19,7 @@ export async function screenContent(interior, bounds, wallpaper) {
     position: 'relative', left: '0', top: '0', width: `${rect.width}px`, height: `${rect.height}px`,
     visibility: 'visible', opacity: '1', pointerEvents: 'none',
   });
-  for (const child of clone.children) child.style.transform = `translateY(${-interior.scrollTop}px)`;
+  for (const child of clone.children) child.style.transform = `translateY(${-scrollTop}px)`;
   staging.appendChild(clone);
   document.body.appendChild(staging);
   try {

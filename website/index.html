@@ -20,6 +20,7 @@
     </div>
 
     <main id="inside" class="interior" aria-label="cladofold. download">
+      <div class="hero-screen">
       <nav class="screen-nav" aria-label="Main">
         <a class="brand" href="#inside" aria-label="cladofold. home">cf<span>.</span></a>
         <div class="nav-actions">
@@ -29,16 +30,60 @@
       </nav>
       <section class="hero-copy" aria-labelledby="headline">
         <p class="eyebrow">a little detail. every day.</p>
-        <h1 id="headline">a softer close.<br /><span>a clearer open.</span></h1>
+        <h1 id="headline">a softer close.<br /><em>a clearer open.</em></h1>
         <p class="description">A little blur. A little wonder.<br class="mobile-break" /> All in the movement of your lid.</p>
         <a class="primary-download download-link" href="https://github.com/Dantease/cladofold/releases">Download for Mac <span aria-hidden="true">↓</span></a>
         <p class="release-note">Free preview · <span data-version>1.3.0</span> · macOS 14+</p>
         <button class="text-link" id="compatibility-open">Will it work on my Mac?</button>
         <p class="phone-note" id="phone-note" hidden>Made for a Mac. Save this page to download there.</p>
       </section>
+      <a class="explore-cue" href="#features">Make it yours <span aria-hidden="true">↓</span></a>
+      </div>
+
+      <section id="features" class="feature-section" aria-labelledby="look-title">
+        <div class="feature-copy">
+          <p class="eyebrow">01 / THE LOOK</p>
+          <h2 id="look-title">A little haze.<br /><em>Or a little more.</em></h2>
+          <p>Find your balance of blur and soft dark edges. Start with a preset, then make it your own.</p>
+        </div>
+        <div class="settings-card" aria-label="Interactive appearance settings preview">
+          <div class="settings-heading"><span>Appearance</span><span class="preview-label">TRY IT</span></div>
+          <div class="effect-sample" aria-label="Preview of the selected blur and border settings">
+            <div class="sample-content"><span>cladofold.</span></div><div class="sample-border"></div>
+          </div>
+          <div class="preset-options" aria-label="Blur presets">
+            <button type="button" data-preset="Duo" aria-pressed="true">Duo</button>
+            <button type="button" data-preset="Subtle" aria-pressed="false">Subtle</button>
+            <button type="button" data-preset="Balanced" aria-pressed="false">Balanced</button>
+            <button type="button" data-preset="Dreamy" aria-pressed="false">Dreamy</button>
+          </div>
+          <label class="setting-range" for="demo-blur"><span>Maximum blur <output id="blur-value" for="demo-blur">48 pt</output></span><input id="demo-blur" type="range" min="0" max="80" value="48" step="1" /></label>
+          <label class="setting-range" for="demo-border"><span>Dark border <output id="border-value" for="demo-border">100%</output></span><input id="demo-border" type="range" min="0" max="150" value="100" step="1" /></label>
+          <p class="preview-caption">A small preview of the controls in the app.</p>
+        </div>
+      </section>
+
+      <section class="feature-section response-section" aria-labelledby="feel-title">
+        <div class="feature-copy">
+          <p class="eyebrow">02 / THE FEEL</p>
+          <h2 id="feel-title">Your lid.<br /><em>Your timing.</em></h2>
+          <p>Begin with the first movement. Let the blur stay while you pause, or have it gently clear.</p>
+        </div>
+        <div class="settings-card response-card" aria-label="Lid response settings preview">
+          <div class="settings-heading"><span>Lid response</span><span class="preview-label">IN THE APP</span></div>
+          <label class="setting-toggle"><span>Start when I begin closing<small>Follows the open position you start from.</small></span><input id="demo-start" type="checkbox" role="switch" checked /></label>
+          <label class="setting-toggle"><span>Keep blur while paused<small>Clear it when you open the lid back up.</small></span><input id="demo-hold" type="checkbox" role="switch" checked /></label>
+          <p class="response-note" id="response-note" aria-live="polite">Starts with your movement. Holds until you reopen.</p>
+          <p class="preview-caption">Fine-tune angles and smoothing in the app or System Settings.</p>
+        </div>
+      </section>
+
       <footer class="screen-footer">
-        <span>Small app. Softer edges.</span>
-        <div><button id="install-open" class="text-link">Installing the preview</button><a class="download-link footer-download" href="https://github.com/Dantease/cladofold/releases">Get cladofold. <span aria-hidden="true">↓</span></a></div>
+        <p class="eyebrow">A LITTLE DETAIL. ALL YOURS.</p>
+        <h2>Make room for<br /><em>a softer close.</em></h2>
+        <a class="primary-download download-link" href="https://github.com/Dantease/cladofold/releases">Get cladofold. <span aria-hidden="true">↓</span></a>
+        <p class="footer-requirements">Free preview · macOS 14+ · Apple silicon &amp; Intel</p>
+        <div class="footer-meta"><span>cladofold. © 2026</span><div><button id="install-open" class="text-link">Setup &amp; compatibility</button><a class="text-link" href="https://github.com/Dantease/cladofold" target="_blank" rel="noopener noreferrer">Source on GitHub ↗</a></div></div>
       </footer>
     </main>
 
@@ -49,6 +94,16 @@
     </div>
     <output id="fold-state" class="sr-only">MacBook closed</output>
     <p id="fallback-note" class="fallback-note" hidden>Animation isn’t available here. You can still download the app.</p>
+
+    <dialog id="star-download" aria-labelledby="star-title">
+      <div class="dialog-top"><span class="eyebrow">A SMALL THANK YOU</span><button class="dialog-close" aria-label="Close download step">×</button></div>
+      <h2 id="star-title">One little star.</h2>
+      <p id="star-description">Star cladofold. on GitHub, then come back for your download. It helps more people find the project.</p>
+      <a id="star-repository" class="star-action" href="https://github.com/Dantease/cladofold" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☆</span> Star on GitHub <span aria-hidden="true">↗</span></a>
+      <label class="star-confirmation"><input id="star-confirmed" type="checkbox" /> <span>I’ve starred cladofold. on GitHub.</span></label>
+      <button id="continue-download" class="primary-download" type="button" disabled>Continue to download <span aria-hidden="true">↓</span></button>
+      <p class="muted" id="download-status" aria-live="polite">Already starred? Confirm above to continue.</p>
+    </dialog>
 
     <dialog id="compatibility" aria-labelledby="compatibility-title">
       <div class="dialog-top"><span class="eyebrow">BEFORE YOU DOWNLOAD</span><button class="dialog-close" aria-label="Close compatibility information">×</button></div>
@@ -66,6 +121,7 @@
     <dialog id="installation" aria-labelledby="installation-title">
       <div class="dialog-top"><span class="eyebrow">A QUICK SETUP</span><button class="dialog-close" aria-label="Close installation instructions">×</button></div>
       <h2 id="installation-title">One small addition.</h2>
+      <p>macOS 14+ and a readable lid-angle sensor are needed for automatic folding. <button class="text-link" id="footer-compatibility">Check supported Macs</button>.</p>
       <ol><li>Open the downloaded DMG and drag cladofold. into Applications.</li><li>Open the app and allow Screen Recording when prompted.</li><li>Choose “Open in System Settings” to adjust the blur, dark borders, and lid response.</li></ol>
       <p>This is an <strong>unnotarized preview</strong>. macOS may require the app-specific “Open Anyway” step in Privacy &amp; Security. Only continue if you trust this download.</p>
       <a class="text-link" href="https://support.apple.com/102445" target="_blank" rel="noopener noreferrer">Apple’s instructions <span aria-hidden="true">↗</span></a>

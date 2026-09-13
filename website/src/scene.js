@@ -26,7 +26,7 @@ export function createScene(container, interior, onReady, onFailure) {
   const up = new THREE.Vector3(0,normal.z,-normal.y);
   const box = new THREE.Box3();
   const modelScale=3.4/35.484545;
-  let model,lid,screen,wallpaper,bounds;
+  let model,lid,screen,wallpaper,bounds,topCanvas;
   let viewWidth=innerWidth,viewHeight=innerHeight-40,openDistance=6,lastOpening=0,lastInteractive=false;
   let disposed=false,failed=false,ready=false,contentGeneration=0,resizeTimer;
 
@@ -69,6 +69,7 @@ export function createScene(container, interior, onReady, onFailure) {
     world.updateMatrixWorld(true);positionCamera();
   }
   function layoutContent() {
+    topCanvas=null;
     fitFrame();
     bounds=projectedBounds();
     const left=bounds.left+1,top=bounds.top+1;
@@ -83,9 +84,12 @@ export function createScene(container, interior, onReady, onFailure) {
     if(!screen || !wallpaper || disposed) return;
     const generation=++contentGeneration;
     try {
-      const canvas=await screenContent(interior,bounds,wallpaper);
+      const scrollTop=interior.scrollTop;
+      const canvas=scrollTop===0 && topCanvas ? topCanvas : await screenContent(interior,bounds,wallpaper,scrollTop);
+      const hero=scrollTop===0 ? canvas : topCanvas || await screenContent(interior,bounds,wallpaper,0);
       if(disposed || generation!==contentGeneration) return;
-      fold.setSource(canvas);ready=true;
+      topCanvas=hero;
+      fold.setSource(interior.scrollTop===0 ? topCanvas : canvas);ready=true;
       render(lastOpening,lastInteractive);onReady();
     } catch(error) {
       if(disposed || generation!==contentGeneration) return;
@@ -132,6 +136,7 @@ export function createScene(container, interior, onReady, onFailure) {
   }).catch(()=>{if(!disposed){failed=true;onFailure();}});
   return {
     render,resize,refreshTexture,
+    restoreTopTexture(){if(topCanvas)fold.setSource(topCanvas);},
     dispose(){
       disposed=true;contentGeneration++;clearTimeout(resizeTimer);
       world.traverse(object=>{object.geometry?.dispose();const materials=Array.isArray(object.material)?object.material:[object.material];for(const material of materials){if(!material || material===fold.material)continue;for(const value of Object.values(material))if(value?.isTexture)value.dispose();material.dispose();}});
