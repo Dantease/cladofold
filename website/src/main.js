@@ -15,6 +15,7 @@ let target = 0;
 let frame = 0;
 let lastTime = performance.now();
 let scene;
+let sceneReady = false;
 let fingerY = null;
 let unavailable = false;
 const touch = matchMedia('(pointer: coarse)').matches;
@@ -38,7 +39,7 @@ function failScene() {
   document.querySelector('#fallback-note').hidden = false;
   setOpening(1, true);
 }
-try { scene = createScene(stage, () => schedule(), failScene); } catch { failScene(); }
+try { scene = createScene(stage, () => { sceneReady = true; lastTime = performance.now(); schedule(); }, failScene); } catch { failScene(); }
 
 function refresh() {
   const opened = opening >= 0.999;
@@ -58,6 +59,8 @@ function refresh() {
 }
 function animate(now) {
   frame = 0;
+  // Keep the first reveal intact when someone scrolls before the model arrives.
+  if (!sceneReady && !unavailable) return;
   const elapsed = (now - lastTime) / 1000;
   lastTime = now;
   opening = reduced || unavailable ? target : followOpening(opening, target, elapsed);
