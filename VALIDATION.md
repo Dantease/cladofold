@@ -26,7 +26,9 @@ The effect does not draw on the macOS lock screen or run while asleep. Intel and
 
 The black entry, upward opening, downward closing, projected display blur, open-screen alignment, download controls, and dialogs were reviewed in a browser at desktop and phone widths (390 and 320 pixels). The compact layout allows content scrolling before closing when its interior overflows. Real iPhone touch and mobile GPU performance remain device-testing items.
 
-Seven website motion tests pass. Keyboard Home/End, the reduced-motion toggle, modal dismissal, and public subpath asset loading were checked in the browser without console warnings or errors. The public GitHub Pages deployment succeeded. The new download remains gated until its draft release is published after the live app check.
+Twenty-five website tests pass. The published v1.3.0-preview contains the verified build 9 DMG, ZIP, and checksum manifest; GitHub's asset digests match the local packages. The production website at cladofold.app points to that release. A real browser click on Download for Mac emitted a download event immediately and then showed the optional, dismissible star suggestion without moving focus. The live page reported no console warnings or errors.
+
+The release-tag deployment was rejected by GitHub Pages' existing environment protection rules. The website was then deployed successfully from its permitted publishing branch (run 34789100377). The workflow no longer tries to deploy release tags; the website README documents how to dispatch a refresh from the publishing branch after future releases.
 
 ## Website lid-only redesign — September 13, 2026
 
