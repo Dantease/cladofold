@@ -4,16 +4,18 @@ Build host: Apple silicon MacBook Pro (M5 Max), macOS 26.6.2, Apple Swift 6.3.3.
 
 ## Automated checks
 
-- 38 behavior checks: first-degree closing onset, held partial folds, quick partial reopening, immediate full clear, near-closed endpoints, optional clear on stillness, invalid readings, manual mode, lifecycle resets, and preference migration.
-- 30 synthetic Core Image rendering checks: progressive blur, dark borders, endpoint fidelity, deterministic reversal, and 15 regression cases for unwanted darkening along the top edge. These render generated patterns, never the desktop.
+- 39 behavior checks: first-degree closing onset, held partial folds, quick partial reopening, immediate full clear and full black, near-closed endpoints, optional clear on stillness, invalid readings, manual mode, lifecycle resets, and preference migration.
+- 33 synthetic Core Image rendering checks: progressive blur, dark borders, endpoint fidelity, deterministic reversal, 15 regression cases for unwanted darkening along the top edge, brighter early folds, and the 30-degree black endpoint. These render generated patterns, never the desktop.
 - 5 installation checks: fresh install, identical install, update, unrelated pane preservation, and invalid bundle rejection.
 - Universal arm64 and x86_64 app and preference-pane compilation; strict local signature verification. GitHub’s macOS runner independently passed the build, behavioral timelines, and installation safeguards.
-- The installed app, extracted ZIP, and mounted read-only DMG have the same executable SHA-256: `4b79bbe8b88b632cbb79193fa23aa9bb41d8bbb815b520db3a296a24d4dbead3`. Both package checksums pass.
-- App and installed System Settings pane report version 1.3.0. Saved animation settings match the pre-update export; new controls migrate without discarding the existing configuration.
+- The installed 1.3.0 build 7 app executable SHA-256 is `6deccaa7555d62cfb6a4353d4224e7371077d2bccebb9f42cf74aeff6ac77443`. The earlier build 6 distribution packages were verified against `4b79bbe8b88b632cbb79193fa23aa9bb41d8bbb815b520db3a296a24d4dbead3`; those draft packages must be refreshed before releasing build 7.
+- App and installed System Settings pane report version 1.3.0, build 7. Saved animation settings are preserved; this Mac's endpoint was explicitly changed to 30° at the owner's request.
 
 ## Runtime limits
 
 Earlier previews completed live desktop rendering on this Mac. The 1.3.0 build still needs its own installed-app capture and physical-lid acceptance checks. Automated timelines cannot establish perceived latency on real hardware. Apple silicon and Intel slices are compiled, but Intel and macOS 14 runtime behavior have not been physically tested.
+
+The September 13 repair found live lid-angle readings but Screen Recording denied by macOS. Build 7 was installed with the 30° endpoint and one-frame GPU submission limit. Restoring Screen Recording requires the owner's macOS authentication; live verification remains pending until access is granted.
 
 The effect does not draw on the macOS lock screen or run while asleep. New ad-hoc signatures may require refreshing the app’s Screen Recording permission. This preview is not notarized.
 

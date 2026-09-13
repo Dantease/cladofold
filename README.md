@@ -22,7 +22,7 @@ The **cf.** mark follows the CladoBook icon: lowercase cream lettering, an acid-
 
 The top switch toggles the effect. **Duo fold animation** adds a hinge-anchored perspective shift, tapered black side borders that soften with the image, stronger darkening toward the outer edge, and a final fade to black. Opening reverses the same angle-driven transition. **Dark border** adjusts how far the borders reach inward; disable Duo mode to return to the original blur.
 
-**Start when I begin closing** tracks your open position instead of waiting for a fixed threshold. **Finish near** sets the near-closed endpoint (8° by default). **Keep blur until I open the lid back up** holds the effect when you pause; turn it off to clear after half a second of stillness. Turn automatic start off to use the original manual angle thresholds.
+**Start when I begin closing** tracks your open position instead of waiting for a fixed threshold. **Black at** sets the full-darkness endpoint (30° above fully closed by default in Duo mode). Early lid movement develops blur and borders while keeping the desktop bright; the final fade reaches black at the chosen angle. **Keep blur until I open the lid back up** holds the effect when you pause; turn it off to clear after half a second of stillness. Turn automatic start off to use the original manual angle thresholds. Existing saved angle preferences are preserved during upgrades.
 
 Adjust maximum blur, darkening, smoothing, and progressive blur from the hinge. Settings save immediately and synchronize between the app and the System Settings pane. **Duo** selects the new animation with a 48 pt blur and quicker response; **Subtle**, **Balanced**, and **Dreamy** change blur, darkening, and smoothing. Presets preserve your angle thresholds and login preference.
 
@@ -70,7 +70,7 @@ To remove cladofold., turn off Launch at login, quit it, then move `~/Applicatio
 
 - SwiftUI provides shared controls hosted by both AppKit and `NSPreferencePane`.
 - CFPreferences plus distributed change notifications synchronize settings between processes.
-- IOKit HID feature report 1 supplies the angle on a serial background queue at 30 Hz. Main-thread interpolation runs at 60 Hz; rendering stops when the effect is hidden or stationary.
+- IOKit HID feature report 1 supplies the angle on a serial background queue at 30 Hz. Main-thread interpolation runs at 60 Hz; rendering stops when the effect is hidden or stationary. Only one Metal frame is submitted at a time, so a busy GPU skips to the newest angle instead of queuing older frames.
 - ScreenCaptureKit captures a single Retina desktop frame per fold. Display metadata and reusable GPU resources are prepared ahead of time. A tiny transient permission-check frame is also captured when verifying access. Core Image projects it through a hinge-anchored perspective transform onto black, then applies variable-radius hinge blur and spatial shading. Black participates in the blur so margins feather naturally. Metal presents the result.
 - A generation guard invalidates asynchronous captures after disabling, sleep, or sensor loss. The six-second preview is bounded, and the keyboard shortcut is registered through Carbon without monitoring keystrokes.
 

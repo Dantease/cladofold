@@ -55,8 +55,9 @@ check(BlurMath.follow(0.1, toward: 0, elapsed: 1.0 / 60, duration: 0.6) == 0, "C
 let reversed = (0..<6).reduce(0.8) { value, _ in BlurMath.follow(value, toward: 0.1, elapsed: 1.0 / 60, duration: 0.6) }
 check(abs(reversed - 0.1) < 0.02, "Opening follows a reversal within 100 ms even with maximum smoothing")
 check(motion.target(angle: 50, time: 61, settings: adaptive) < 0.88, "Old 50-degree endpoint no longer fades to full black in automatic mode")
-check(motion.target(angle: 14, time: 62, settings: adaptive) < 1, "Visible progress continues near closure")
-check(motion.target(angle: 8, time: 63, settings: adaptive) == 1, "Automatic fold completes at the configured near-closed angle")
+check(motion.target(angle: 31, time: 62, settings: adaptive) < 1, "The desktop is not fully black above 30 degrees")
+check(motion.target(angle: 30, time: 63, settings: adaptive) == 1, "Automatic fold completes at 30 degrees above closed")
+check(BlurMath.follow(0.8, toward: 1, elapsed: 1.0 / 60, duration: 0.6) == 1, "Full darkness reaches its angle without an exponential tail")
 motion.reset()
 check(motion.target(angle: 100, time: 70, settings: adaptive) == 0 && motion.openAngle == 100, "New session anchors at its actual working angle")
 adaptive.holdWhenStill = false
@@ -68,7 +69,7 @@ check(motion.target(angle: .nan, time: 71, settings: adaptive) == 0 && motion.op
 adaptive.automaticStart = false
 check(motion.target(angle: 60, time: 72, settings: adaptive) == BlurMath.progress(angle: 60, settings: adaptive), "Manual thresholds remain available")
 let newMigrated = try JSONDecoder().decode(BlurSettings.self, from: legacy)
-check(newMigrated.automaticStart && newMigrated.nearClosedAngle == 8 && newMigrated.holdWhenStill && newMigrated.endAngle == 15, "Migration enables responsive mode without overwriting old manual angles")
+check(newMigrated.automaticStart && newMigrated.nearClosedAngle == 30 && newMigrated.holdWhenStill && newMigrated.endAngle == 15, "Migration uses the new endpoint without overwriting old manual angles")
 adaptive.nearClosedAngle = 11
 let restoredMotion = try JSONDecoder().decode(BlurSettings.self, from: JSONEncoder().encode(adaptive))
 check(restoredMotion == adaptive, "New motion controls round-trip through saved preferences")

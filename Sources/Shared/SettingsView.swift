@@ -95,7 +95,9 @@ struct SettingsView: View {
                     if preferences.settings.automaticStart {
                         Text(status.openAngle.map { "Following your \(Int($0))° open position." } ?? "Follows the open position you start from.")
                             .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13)
-                        settingSlider("Finish near", value: $preferences.settings.nearClosedAngle, range: 0...30, display: "\(Int(preferences.settings.nearClosedAngle))°")
+                        settingSlider(preferences.settings.duoStyle ? "Black at" : "Full blur at", value: $preferences.settings.nearClosedAngle, range: 0...30, display: "\(Int(preferences.settings.nearClosedAngle))°")
+                        Text(preferences.settings.duoStyle ? "Lid angle above fully closed. Blur begins earlier; full darkness waits until this angle." : "Lid angle above fully closed. The blur reaches its maximum at this angle.")
+                            .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13)
                     } else {
                         settingSlider("Begin below", value: $preferences.settings.startAngle, range: 35...130, display: "\(Int(preferences.settings.startAngle))°")
                         settingSlider("Full blur at", value: $preferences.settings.endAngle, range: 0...(preferences.settings.startAngle - 10), display: "\(Int(preferences.settings.endAngle))°")

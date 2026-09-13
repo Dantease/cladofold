@@ -44,10 +44,13 @@ enum BlurFilter {
         }
         // Shade the moving outer edge more than the hinge, then finish at black.
         // There is no direction-dependent state: reopening retraces the same image.
-        let tail = min(1, max(0, (p - 0.88) / 0.12))
+        let tail = min(1, max(0, (p - 0.96) / 0.04))
         let closure = 1 - tail * tail * (3 - 2 * tail)
-        let hingeLight = (1 - settings.dimming * p) * closure
-        let outerLight = hingeLight * (1 - 0.80 * pow(p, 1.15))
+        // Keep the early fold bright while blur and borders develop. Concentrate
+        // the darkening near the configured endpoint instead of crushing the
+        // top of the desktop during a small lid movement.
+        let hingeLight = (1 - settings.dimming * p * p) * closure
+        let outerLight = hingeLight * (1 - 0.80 * p * p * p)
         let shade = gradient(bounds: bounds, bottom: hingeLight, top: outerLight)
         return projected.applyingFilter("CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: shade]).cropped(to: bounds)
     }

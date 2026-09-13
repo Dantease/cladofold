@@ -12,7 +12,7 @@ struct BlurSettings: Equatable, Codable {
     var duoStyle = true
     var borderDepth = 1.0
     var automaticStart = true
-    var nearClosedAngle = 8.0
+    var nearClosedAngle = 30.0
     var holdWhenStill = true
 
     init() {}
@@ -35,7 +35,7 @@ struct BlurSettings: Equatable, Codable {
         duoStyle = try values.decodeIfPresent(Bool.self, forKey: .duoStyle) ?? true
         borderDepth = try values.decodeIfPresent(Double.self, forKey: .borderDepth) ?? 1
         automaticStart = try values.decodeIfPresent(Bool.self, forKey: .automaticStart) ?? true
-        nearClosedAngle = try values.decodeIfPresent(Double.self, forKey: .nearClosedAngle) ?? 8
+        nearClosedAngle = try values.decodeIfPresent(Double.self, forKey: .nearClosedAngle) ?? 30
         holdWhenStill = try values.decodeIfPresent(Bool.self, forKey: .holdWhenStill) ?? true
         validate()
     }
@@ -47,7 +47,7 @@ struct BlurSettings: Equatable, Codable {
         smoothing = Self.clamp(smoothing, 0...0.6, fallback: 0.12)
         dimming = Self.clamp(dimming, 0...0.65, fallback: 0.2)
         borderDepth = Self.clamp(borderDepth, 0...1.5, fallback: 1)
-        nearClosedAngle = Self.clamp(nearClosedAngle, 0...30, fallback: 8)
+        nearClosedAngle = Self.clamp(nearClosedAngle, 0...30, fallback: 30)
     }
 
     static func clamp(_ value: Double, _ range: ClosedRange<Double>, fallback: Double) -> Double {
@@ -74,6 +74,7 @@ enum BlurMath {
     /// and a physically clear target never leaves an exponential blur tail.
     static func follow(_ current: Double, toward target: Double, elapsed: Double, duration: Double) -> Double {
         guard target > 0 else { return 0 }
+        guard target < 1 else { return 1 }
         let timeConstant = target < current ? min(duration / 4, 0.025) : duration / 4
         return smooth(current, toward: target, elapsed: elapsed, duration: timeConstant)
     }
