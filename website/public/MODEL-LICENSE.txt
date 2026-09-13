@@ -1,0 +1,13 @@
+# MacBook asset attribution
+
+“macbook pro M3 16 inch 2024” by jackbaeten (https://sketchfab.com/jackbaeten), licensed under Creative Commons Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/.
+
+Original source: https://sketchfab.com/3d-models/macbook-pro-m3-16-inch-2024-8e34fc2b303144f78490007d91ff57c4
+
+Downloaded copy: https://raw.githubusercontent.com/adrianhajdin/gsap_macbook_landing/main/public/models/macbook.glb
+
+License evidence: the downloaded GLB embeds author, license, source and title in asset.extras. The same attribution is present in https://github.com/adrianhajdin/gsap_macbook_landing/blob/main/src/components/models/Macbook.jsx.
+
+Modifications: Draco geometry decoded to standard glTF buffers. Connected components were separated into Base and CladofoldLid, with the display named CladofoldScreen. Vertex attributes, material references, embedded images and original open pose were preserved. An inferred X-axis hinge pivot was added at [0, 0.00764, -12.42971].
+
+The 3D asset remains CC BY 4.0; the application source code is licensed separately under MIT.

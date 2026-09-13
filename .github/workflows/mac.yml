@@ -1,0 +1,26 @@
+name: Mac build and behavior
+on:
+  push:
+    paths: ['Sources/**', 'Resources/**', 'Scripts/**', 'Tests/**', '.github/workflows/mac.yml']
+  pull_request:
+    paths: ['Sources/**', 'Resources/**', 'Scripts/**', 'Tests/**', '.github/workflows/mac.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Behavioral timelines
+        run: |
+          mkdir -p build/ModuleCache
+          swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/BlurModel.swift Tests/main.swift -o build/behavior-tests
+          build/behavior-tests
+      - name: Universal app and System Settings pane
+        run: ./Scripts/build.sh
+      - name: Installation safeguards
+        run: |
+          swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/App/PaneInstaller.swift Tests/Installation/main.swift -o build/installation-tests
+          build/installation-tests build/installation-tests-data
+      # Core Image and live capture checks are performed on a Mac with graphics access.

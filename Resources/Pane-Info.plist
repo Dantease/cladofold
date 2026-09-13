@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>cladofold.</string>
+	<key>CFBundleExecutable</key>
+	<string>CladofoldPane</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.dante.Foldable.Settings</string>
+	<key>CFBundleName</key>
+	<string>cladofold.</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.3.0</string>
+	<key>CFBundleVersion</key>
+	<string>6</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>NSPrefPaneIconFile</key>
+	<string>cladofold-cf.icns</string>
+	<key>NSPrefPaneIconLabel</key>
+	<string>cladofold.</string>
+	<key>NSPrefPaneSearchParameters</key>
+	<string>cladofold. blur folding lid angle screen animation</string>
+	<key>NSPrincipalClass</key>
+	<string>CladofoldPreferencePane</string>
+</dict>
+</plist>

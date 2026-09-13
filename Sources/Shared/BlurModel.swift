@@ -1,0 +1,124 @@
+import Foundation
+
+struct BlurSettings: Equatable, Codable {
+    var enabled = true
+    var radius = 36.0
+    var startAngle = 85.0
+    var endAngle = 15.0
+    var smoothing = 0.12
+    var dimming = 0.20
+    var progressiveBlur = true
+    var launchAtLogin = false
+    var duoStyle = true
+    var borderDepth = 1.0
+    var automaticStart = true
+    var nearClosedAngle = 8.0
+    var holdWhenStill = true
+
+    init() {}
+
+    // New controls must not discard the user's previously saved settings.
+    private enum CodingKeys: String, CodingKey {
+        case enabled, radius, startAngle, endAngle, smoothing, dimming, progressiveBlur, launchAtLogin, duoStyle, borderDepth
+        case automaticStart, nearClosedAngle, holdWhenStill
+    }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try values.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+        radius = try values.decodeIfPresent(Double.self, forKey: .radius) ?? 36
+        startAngle = try values.decodeIfPresent(Double.self, forKey: .startAngle) ?? 85
+        endAngle = try values.decodeIfPresent(Double.self, forKey: .endAngle) ?? 15
+        smoothing = try values.decodeIfPresent(Double.self, forKey: .smoothing) ?? 0.12
+        dimming = try values.decodeIfPresent(Double.self, forKey: .dimming) ?? 0.20
+        progressiveBlur = try values.decodeIfPresent(Bool.self, forKey: .progressiveBlur) ?? true
+        launchAtLogin = try values.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
+        duoStyle = try values.decodeIfPresent(Bool.self, forKey: .duoStyle) ?? true
+        borderDepth = try values.decodeIfPresent(Double.self, forKey: .borderDepth) ?? 1
+        automaticStart = try values.decodeIfPresent(Bool.self, forKey: .automaticStart) ?? true
+        nearClosedAngle = try values.decodeIfPresent(Double.self, forKey: .nearClosedAngle) ?? 8
+        holdWhenStill = try values.decodeIfPresent(Bool.self, forKey: .holdWhenStill) ?? true
+        validate()
+    }
+
+    mutating func validate() {
+        radius = Self.clamp(radius, 0...80, fallback: 36)
+        startAngle = Self.clamp(startAngle, 35...130, fallback: 85)
+        endAngle = Self.clamp(endAngle, 0...(startAngle - 10), fallback: 15)
+        smoothing = Self.clamp(smoothing, 0...0.6, fallback: 0.12)
+        dimming = Self.clamp(dimming, 0...0.65, fallback: 0.2)
+        borderDepth = Self.clamp(borderDepth, 0...1.5, fallback: 1)
+        nearClosedAngle = Self.clamp(nearClosedAngle, 0...30, fallback: 8)
+    }
+
+    static func clamp(_ value: Double, _ range: ClosedRange<Double>, fallback: Double) -> Double {
+        min(range.upperBound, max(range.lowerBound, value.isFinite ? value : fallback))
+    }
+}
+
+enum BlurMath {
+    static func progress(angle: Double, settings: BlurSettings) -> Double {
+        guard angle.isFinite, settings.enabled else { return 0 }
+        var settings = settings
+        settings.validate()
+        let t = min(1, max(0, (settings.startAngle - angle) / (settings.startAngle - settings.endAngle)))
+        return t * t * (3 - 2 * t)
+    }
+
+    static func smooth(_ current: Double, toward target: Double, elapsed: Double, duration: Double) -> Double {
+        guard duration > 0 else { return target }
+        let next = current + (target - current) * (1 - exp(-max(0, elapsed) / duration))
+        return abs(next - target) < 0.0005 ? target : next
+    }
+
+    /// Smoothing is a short settling interval. Reopening gets a tighter bound,
+    /// and a physically clear target never leaves an exponential blur tail.
+    static func follow(_ current: Double, toward target: Double, elapsed: Double, duration: Double) -> Double {
+        guard target > 0 else { return 0 }
+        let timeConstant = target < current ? min(duration / 4, 0.025) : duration / 4
+        return smooth(current, toward: target, elapsed: elapsed, duration: timeConstant)
+    }
+
+    /// Report 1 is a little-endian, nine-bit angle in whole degrees.
+    static func decodeLidReport(_ bytes: [UInt8]) -> Double? {
+        guard bytes.count >= 3, bytes[0] == 1 else { return nil }
+        let angle = Int(bytes[1]) | (Int(bytes[2]) << 8)
+        guard (0...180).contains(angle) else { return nil }
+        return Double(angle)
+    }
+}
+
+/// Tracks one fold from the user's working position. Stationary samples never
+/// move that reference in hold mode; full reset is reserved for lifecycle changes.
+struct LidMotion {
+    private(set) var openAngle: Double?
+    private var previousAngle: Double?
+    private var lastMovement = 0.0
+
+    mutating func reset() { self = LidMotion() }
+
+    mutating func target(angle: Double, time: Double, settings: BlurSettings) -> Double {
+        guard angle.isFinite, (0...180).contains(angle), settings.enabled else {
+            reset(); return 0
+        }
+        guard let previousAngle else {
+            self.previousAngle = angle
+            openAngle = angle
+            lastMovement = time
+            return settings.automaticStart ? 0 : BlurMath.progress(angle: angle, settings: settings)
+        }
+        if abs(angle - previousAngle) >= 0.5 { lastMovement = time }
+        self.previousAngle = angle
+        if !settings.holdWhenStill && time - lastMovement >= 0.5 {
+            openAngle = angle
+            return 0
+        }
+        guard settings.automaticStart else { return BlurMath.progress(angle: angle, settings: settings) }
+        let reference = max(openAngle ?? angle, angle)
+        openAngle = reference
+        let end = min(settings.nearClosedAngle, max(0, reference - 10))
+        // Half a degree suppresses the numerical boundary without waiting through
+        // a large fixed-angle dead zone. HID reports arrive in whole degrees.
+        let t = min(1, max(0, (reference - angle - 0.5) / max(0.5, reference - end - 0.5)))
+        return t
+    }
+}

@@ -1,0 +1,78 @@
+cladofold. 1.3.0 — preview
+A softer close. A clearer open.
+
+INSTALL
+1. Open the disk image and drag cladofold. into Applications.
+   With the ZIP download, unzip it and move the app into Applications.
+   If you cannot write to /Applications, use your own ~/Applications folder.
+2. Open the installed app. It installs its settings pane for your user account.
+3. Choose “Check Mac compatibility…” to see whether your lid sensor is readable.
+4. Choose “Allow…” to enable Screen Recording for cladofold. in System Settings.
+   Accept “Quit & Reopen” if macOS asks. Screen access is needed only for the
+   desktop animation; the miniature preview works without it.
+5. Choose “Open in System Settings” to adjust the animation and its on/off switch.
+
+THIS IS AN UNNOTARIZED PREVIEW
+This preview has a local ad-hoc signature, not a Developer ID signature or
+Apple notarization. macOS may block it on first launch. If you trust the person
+who provided it, try opening it, then use System Settings > Privacy & Security
+> Open Anyway for this app. Managed Macs may not permit this.
+Apple's instructions: https://support.apple.com/102445
+A normal notarized release still requires the developer's Apple Developer ID.
+
+REQUIREMENTS
+• macOS Sonoma 14.0 or later, with Metal graphics.
+• Universal app: native Apple silicon and Intel binaries are both included.
+• A built-in display and a readable lid-angle sensor for automatic folding.
+• Screen Recording permission for the desktop effect. No Accessibility,
+  Input Monitoring, camera, microphone, or administrator access is required
+  by the app. Installing in the system Applications folder may need admin access.
+
+EXPECTED SENSOR SUPPORT — verify with the app's compatibility check
+• MacBook Pro: 14-inch and 16-inch models, including the 2019 16-inch Intel model.
+• MacBook Air: M2 and later, both 13-inch and 15-inch models.
+• M1 MacBook Air, 13-inch MacBook Pro (including M1/M2 Touch Bar), most older
+  Intel MacBooks, and the 12-inch MacBook do not have the required angle sensor.
+  They can use the previews, but cannot follow the lid continuously.
+These are research-based expectations, not a claim that every model is tested.
+This build was tested on an Apple M5 Max MacBook Pro; Intel and older macOS
+versions need real-device testing. There is no model whitelist: any Mac exposing
+Apple's compatible sensor can work, including future models.
+
+USE
+Start with your lid at a comfortable angle. Closing begins the effect from there.
+“Finish near” controls the near-closed endpoint. Reopen to your starting angle
+to clear. Blur stays at a held angle by default; turn off “Keep blur until I open
+the lid back up” to clear after half a second of stillness. Turn off “Start when
+I begin closing” to choose manual angle thresholds.
+“Duo fold animation” adds the dark borders, perspective, blur and fade to black.
+“Dark border”, “Maximum blur”, “Darkening” and “Smoothing” adjust the effect.
+The menu-bar cf. button also provides settings, preview and Quit.
+Control–Option–Command–B disables the effect immediately.
+The desktop preview runs for six seconds and clears automatically.
+
+PRIVACY AND BEHAVIOR
+The app captures one temporary desktop frame per fold. The image freezes during
+that animation while your applications keep running underneath. Frames remain
+in memory on your Mac, are discarded when the effect clears, and are never
+saved or transmitted. The app contains no analytics or automatic updater.
+The effect clears on sleep, lock, display changes, sensor loss or disable.
+macOS owns the lock screen and sleep behavior; an animation cannot run while
+asleep or cover the lock screen. External displays are not affected.
+
+TROUBLESHOOTING
+If an updated preview cannot capture despite permission being enabled, remove
+only its old entry in Screen & System Audio Recording, add the installed
+cladofold. app again, enable it, and quit/reopen when prompted.
+Quit and reopen System Settings if its pane was already open during an update.
+The app's name ends in a period. With extensions shown, its filename is
+“cladofold..app”; the two periods are intentional.
+
+REMOVE
+Turn off “Launch at login”, quit the app, and move it to Trash.
+Also move ~/Library/PreferencePanes/cladofold..prefPane to Trash.
+You can remove its Screen Recording entry in Privacy & Security.
+
+SHARE
+Send the complete DMG or ZIP, including these instructions, to your recipient.
+They do not need Xcode, Homebrew, or any developer tools.

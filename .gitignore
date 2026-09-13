@@ -1,0 +1,14 @@
+.build/
+build/
+dist/
+node_modules/
+.DS_Store
+*.xcuserstate
+.env
+.env.*
+!.env.example
+planning/
+CONTEXT.md
+*.pem
+*.p12
+*.mobileprovision

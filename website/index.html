@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <title>cladofold. — a softer close.</title>
+    <meta name="description" content="A softer close. A clearer open. A free, open-source MacBook app that brings blur and soft dark borders to the movement of your lid." />
+    <meta property="og:title" content="cladofold. — a softer close." />
+    <meta property="og:description" content="Open the lid. Feel the difference. Download the open-source MacBook preview." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/png" href="./icon.png" />
+    <script>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    <div id="stage" aria-hidden="true"></div>
+    <div class="intro" id="intro">
+      <span class="wordmark">cladofold<span>.</span></span>
+      <button id="open-lid" class="open-cue" aria-label="Open the MacBook"><span class="cue-arrow" aria-hidden="true">↑</span><span id="gesture-hint">Scroll up to open</span></button>
+    </div>
+
+    <main id="inside" class="interior" aria-label="cladofold. download">
+      <nav class="screen-nav" aria-label="Main">
+        <a class="brand" href="#inside" aria-label="cladofold. home">cf<span>.</span></a>
+        <div class="nav-actions">
+          <a class="star-link" aria-label="Star on GitHub" href="https://github.com/Dantease/cladofold" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☆</span><span>Star on GitHub</span></a>
+          <a class="nav-download download-link" href="https://github.com/Dantease/cladofold/releases">Download <span aria-hidden="true">↗</span></a>
+        </div>
+      </nav>
+      <section class="hero-copy" aria-labelledby="headline">
+        <p class="eyebrow">a little detail. every day.</p>
+        <h1 id="headline">a softer close.<br /><span>a clearer open.</span></h1>
+        <p class="description">A little blur. A little wonder.<br class="mobile-break" /> All in the movement of your lid.</p>
+        <a class="primary-download download-link" href="https://github.com/Dantease/cladofold/releases">Download for Mac <span aria-hidden="true">↓</span></a>
+        <p class="release-note">Free preview · <span data-version>1.3.0</span> · macOS 14+</p>
+        <button class="text-link" id="compatibility-open">Will it work on my Mac?</button>
+        <p class="phone-note" id="phone-note" hidden>Made for a Mac. Save this page to download there.</p>
+      </section>
+      <footer class="screen-footer">
+        <span>Small app. Softer edges.</span>
+        <div><button id="install-open" class="text-link">Installing the preview</button><a class="download-link footer-download" href="https://github.com/Dantease/cladofold/releases">Get cladofold. <span aria-hidden="true">↓</span></a></div>
+      </footer>
+    </main>
+
+    <div class="experience-controls" aria-label="Animation controls">
+      <button id="close-lid" class="quiet-button" hidden>Close the lid <span aria-hidden="true">↓</span></button>
+      <a id="skip-motion" class="quiet-button" href="#inside">Open without animation</a>
+      <button id="motion-toggle" class="quiet-button" aria-pressed="false">Reduce motion</button>
+    </div>
+    <output id="fold-state" class="sr-only">MacBook closed</output>
+    <p id="fallback-note" class="fallback-note" hidden>Animation isn’t available here. You can still download the app.</p>
+
+    <dialog id="compatibility" aria-labelledby="compatibility-title">
+      <div class="dialog-top"><span class="eyebrow">BEFORE YOU DOWNLOAD</span><button class="dialog-close" aria-label="Close compatibility information">×</button></div>
+      <h2 id="compatibility-title">Made for the right hinge.</h2>
+      <p>cladofold. needs macOS Sonoma 14 or later, Metal graphics, and a readable lid-angle sensor for automatic folding.</p>
+      <dl class="model-list">
+        <div><dt>MacBook Pro</dt><dd>Expected on 14-inch and 16-inch models, including the 2019 Intel 16-inch.</dd></div>
+        <div><dt>MacBook Air</dt><dd>Expected on M2 and later models, in 13-inch and 15-inch sizes.</dd></div>
+        <div><dt>Other MacBooks</dt><dd>M1 Air, 13-inch Pro, and most older models can use previews but lack the sensor for automatic folding.</dd></div>
+      </dl>
+      <p class="muted">Sensor support varies. Use “Check Mac compatibility…” in the app to check your hardware. This preview has been tested on one MacBook Pro; other models are research-based expectations.</p>
+      <p>Universal download for Apple silicon and Intel. Screen Recording permission is required for the desktop effect. Frames stay in memory on your Mac.</p>
+      <a class="primary-download download-link" href="https://github.com/Dantease/cladofold/releases">Download the preview <span aria-hidden="true">↓</span></a>
+    </dialog>
+    <dialog id="installation" aria-labelledby="installation-title">
+      <div class="dialog-top"><span class="eyebrow">A QUICK SETUP</span><button class="dialog-close" aria-label="Close installation instructions">×</button></div>
+      <h2 id="installation-title">One small addition.</h2>
+      <ol><li>Open the downloaded DMG and drag cladofold. into Applications.</li><li>Open the app and allow Screen Recording when prompted.</li><li>Choose “Open in System Settings” to adjust the blur, dark borders, and lid response.</li></ol>
+      <p>This is an <strong>unnotarized preview</strong>. macOS may require the app-specific “Open Anyway” step in Privacy &amp; Security. Only continue if you trust this download.</p>
+      <a class="text-link" href="https://support.apple.com/102445" target="_blank" rel="noopener noreferrer">Apple’s instructions <span aria-hidden="true">↗</span></a>
+      <p class="muted">The app follows your built-in display. It leaves sleep and the macOS lock screen under system control.</p>
+      <p class="muted">MacBook model by <a class="text-link" href="https://sketchfab.com/3d-models/macbook-pro-m3-16-inch-2024-8e34fc2b303144f78490007d91ff57c4" target="_blank" rel="noopener noreferrer">jackbaeten</a>, under <a class="text-link" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Adapted for hinge animation. cladofold. is an independent project.</p>
+    </dialog>
+    <noscript><style>.intro,.experience-controls{display:none}.interior{position:relative;inset:auto;min-height:100svh;visibility:visible;opacity:1;pointer-events:auto}body{overflow:auto}</style></noscript>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
