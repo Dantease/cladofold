@@ -4,6 +4,7 @@ import Combine
 import Carbon
 import ServiceManagement
 import ScreenCaptureKit
+import QuartzCore
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWindowDelegate {
     let preferences = Preferences()
@@ -12,6 +13,9 @@ import ScreenCaptureKit
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var timers: [Timer] = []
+    private var animationDisplayLink: CADisplayLink?
+    private var lastFrameTime: Double?
+    private var frameIntervals: [Double] = []
     private var cancellables: Set<AnyCancellable> = []
     private var hotKey: EventHotKeyRef?
     private var hotKeyHandler: EventHandlerRef?
@@ -30,7 +34,7 @@ import ScreenCaptureKit
     private var locked = false
     private var progress = 0.0
     private var lastRender = -1.0
-    private var lastTick = Date()
+    private var lastTick = CACurrentMediaTime()
     private var previewStart: Date?
     private var captureRetryAfter = Date.distantPast
     private var loginState: Bool?
@@ -54,13 +58,16 @@ import ScreenCaptureKit
             self.angle = angle
             self.sensorMessage = message
             if angle != nil { self.sampleTime = Date() }
+            // A sensor change wakes rendering. Intermediate frames then follow
+            // the built-in display's clock, independently of the HID cadence.
+            if self.animationDisplayLink?.isPaused != false { self.tick() }
         }
         sensor.start()
         motionSettings = preferences.settings
         preferences.$settings.dropFirst().sink { [weak self] _ in
             DispatchQueue.main.async { self?.settingsChanged() }
         }.store(in: &cancellables)
-        addTimer(interval: 1.0 / 60) { [weak self] in self?.tick() }
+        configureAnimationDisplayLink()
         addTimer(interval: 0.5) { [weak self] in self?.publishStatus() }
         reconcileLoginItem()
         publishStatus()
@@ -78,6 +85,38 @@ import ScreenCaptureKit
         let timer = Timer(timeInterval: interval, repeats: true) { _ in action() }
         RunLoop.main.add(timer, forMode: .common)
         timers.append(timer)
+    }
+
+    private func configureAnimationDisplayLink() {
+        animationDisplayLink?.invalidate()
+        animationDisplayLink = nil
+        guard let screen = NSScreen.screens.first(where: {
+            ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber).map { CGDisplayIsBuiltin($0.uint32Value) != 0 } ?? false
+        }) else { return }
+        let link = screen.displayLink(target: self, selector: #selector(animationFrame(_:)))
+        let maximum = Float(min(120, max(30, screen.maximumFramesPerSecond)))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: min(60, maximum), maximum: maximum, preferred: maximum)
+        link.isPaused = true
+        link.add(to: .main, forMode: .common)
+        animationDisplayLink = link
+        lastFrameTime = nil
+    }
+
+    @objc private func animationFrame(_ link: CADisplayLink) {
+        let time = CACurrentMediaTime()
+        if let lastFrameTime {
+            frameIntervals.append(time - lastFrameTime)
+            if frameIntervals.count > 240 { frameIntervals.removeFirst() }
+        }
+        lastFrameTime = time
+        tick()
+    }
+
+    private func setAnimationActive(_ active: Bool) {
+        guard let link = animationDisplayLink, link.isPaused == active else { return }
+        link.isPaused = !active
+        lastFrameTime = nil
+        if active { lastTick = CACurrentMediaTime() }
     }
 
     private func setupObservers() {
@@ -99,7 +138,7 @@ import ScreenCaptureKit
     @objc private func waking() { suspended = false; sampleTime = .distantPast; clear(); prepareAfterResume() }
     @objc private func screenLocked() { locked = true; captureAccess.invalidate(); clear() }
     @objc private func screenUnlocked() { locked = false; sampleTime = .distantPast; clear(); prepareAfterResume() }
-    @objc private func displaysChanged() { captureAccess.invalidate(); clear(); overlay.clear(discardResources: true); prepareAfterResume() }
+    @objc private func displaysChanged() { captureAccess.invalidate(); clear(); overlay.clear(discardResources: true); configureAnimationDisplayLink(); prepareAfterResume() }
 
     private func prepareAfterResume() {
         guard !suspended, !locked, !captureAccess.automaticChecksBlocked,
@@ -115,10 +154,12 @@ import ScreenCaptureKit
 
     private func tick() {
         let now = Date()
-        let elapsed = min(0.1, now.timeIntervalSince(lastTick))
-        lastTick = now
+        let tickTime = CACurrentMediaTime()
+        let elapsed = min(1.0 / 30, max(0, tickTime - lastTick))
+        lastTick = tickTime
         guard (preferences.settings.enabled || previewStart != nil), permission, !suspended, !locked else {
             if progress != 0 || overlay.capturing || overlay.ready { clear() }
+            setAnimationActive(false)
             return
         }
         let target: Double
@@ -136,8 +177,10 @@ import ScreenCaptureKit
         progress = BlurMath.follow(progress, toward: target, elapsed: elapsed, duration: preferences.settings.smoothing)
         if progress < 0.0005 && target == 0 {
             if overlay.ready || overlay.capturing { clearOverlay() }
+            setAnimationActive(previewStart != nil)
             return
         }
+        setAnimationActive(true)
         if !overlay.ready && !overlay.capturing && now > captureRetryAfter {
             captureRetryAfter = now.addingTimeInterval(3)
             let generation = captureGeneration
@@ -159,13 +202,15 @@ import ScreenCaptureKit
                 }
             }
         }
-        if overlay.ready && abs(progress - lastRender) > 0.0005 {
+        if overlay.ready && abs(progress - lastRender) > 0.000005 {
             overlay.render(progress: progress, settings: preferences.settings)
             lastRender = progress
         }
+        if previewStart == nil && progress == target && overlay.ready { setAnimationActive(false) }
     }
 
     private func clearOverlay() {
+        setAnimationActive(false)
         captureGeneration += 1
         captureTask?.cancel()
         captureTask = nil
@@ -235,6 +280,13 @@ import ScreenCaptureKit
         info["captureChecksStarted"] = captureChecksStarted
         info["preflightGranted"] = preflight
         info["automaticCaptureChecksBlocked"] = captureAccess.automaticChecksBlocked
+        info["animationClock"] = "displayLink"
+        if !frameIntervals.isEmpty {
+            let sorted = frameIntervals.sorted()
+            info["animationFramesPerSecond"] = 1 / (frameIntervals.reduce(0, +) / Double(frameIntervals.count))
+            info["frameIntervalP95Milliseconds"] = sorted[Int(Double(sorted.count - 1) * 0.95)] * 1000
+            info["frameIntervalMaxMilliseconds"] = sorted.last! * 1000
+        }
         DistributedNotificationCenter.default().postNotificationName(CladofoldID.status, object: nil, userInfo: info, deliverImmediately: true)
         statusItem.button?.toolTip = "cladofold. · \(message)" + (freshAngle.map { " · \(Int($0))°" } ?? "")
         statusItem.button?.contentTintColor = ready ? nil : .systemOrange
@@ -288,6 +340,8 @@ import ScreenCaptureKit
         guard permission else { requestPermission(); return }
         clear()
         previewStart = Date()
+        frameIntervals.removeAll(keepingCapacity: true)
+        setAnimationActive(true)
         captureRetryAfter = .distantPast
     }
 
@@ -433,6 +487,7 @@ import ScreenCaptureKit
     func applicationWillTerminate(_ notification: Notification) {
         clear()
         sensor.stop()
+        animationDisplayLink?.invalidate()
         timers.forEach { $0.invalidate() }
         if let hotKey { UnregisterEventHotKey(hotKey) }
         if let hotKeyHandler { RemoveEventHandler(hotKeyHandler) }

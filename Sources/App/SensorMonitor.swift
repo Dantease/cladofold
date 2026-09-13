@@ -10,7 +10,7 @@ final class SensorMonitor {
 
     func start() {
         let timer = DispatchSource.makeTimerSource(queue: queue)
-        timer.schedule(deadline: .now(), repeating: 1.0 / 30, leeway: .milliseconds(2))
+        timer.schedule(deadline: .now(), repeating: 1.0 / 60, leeway: .milliseconds(1))
         timer.setEventHandler { [weak self] in
             guard let self else { return }
             var angle = self.sensor.read()

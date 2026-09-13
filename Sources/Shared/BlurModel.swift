@@ -70,13 +70,18 @@ enum BlurMath {
         return abs(next - target) < 0.0005 ? target : next
     }
 
-    /// Smoothing is a short settling interval. Reopening gets a tighter bound,
-    /// and a physically clear target never leaves an exponential blur tail.
+    /// Interpolate whole-degree sensor steps on every display frame. Use the
+    /// same response in both directions so reopening does not expose the steps.
+    /// Physical clear/black endpoints still take effect immediately.
     static func follow(_ current: Double, toward target: Double, elapsed: Double, duration: Double) -> Double {
         guard target > 0 else { return 0 }
         guard target < 1 else { return 1 }
-        let timeConstant = target < current ? min(duration / 4, 0.025) : duration / 4
-        return smooth(current, toward: target, elapsed: elapsed, duration: timeConstant)
+        guard duration > 0 else { return target }
+        let timeConstant = min(duration / 2, 0.12)
+        let next = current + (target - current) * (1 - exp(-max(0, elapsed) / timeConstant))
+        // A coarse snap threshold hid the final intermediate frames of each
+        // degree, making a slow fold alternate between movement and a pause.
+        return abs(next - target) < 0.000005 ? target : next
     }
 
     /// Report 1 is a little-endian, nine-bit angle in whole degrees.
