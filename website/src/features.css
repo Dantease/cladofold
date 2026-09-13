@@ -53,14 +53,14 @@ input:focus-visible { outline: 2px solid var(--lime); outline-offset: 5px; }
 .screen-footer .footer-meta { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 72px; padding-top: 24px; border-top: 1px solid #d6e1eb18; color: #8fa6b7; font-size: 11px; }
 .footer-meta > div { display: flex; gap: 24px; }
 .screen-footer .text-link { font-size: 11px; color: #aebfce; }
-.star-action { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 16px; margin: 28px 0 24px; border: 1px solid #83906160; border-radius: 9px; font-size: 15px; }
-.star-action span:first-child { color: var(--lime); font-size: 25px; }
-.star-action span:last-child { margin-left: auto; color: #a8b29b; }
-.star-confirmation { display: flex; align-items: center; gap: 12px; font-size: 13px; line-height: 1.6; cursor: pointer; }
-.star-confirmation input { accent-color: var(--lime); width: 18px; height: 18px; flex-shrink: 0; }
-#continue-download { width: 100%; margin-top: 24px; }
-#continue-download:disabled { background: #333d27; color: #929d81; cursor: default; transform: none; }
-#download-status { font-size: 12px; margin: 15px 0 0; }
+.star-nudge { position: fixed; z-index: 20; right: 24px; bottom: 64px; width: min(350px, calc(100vw - 40px)); padding: 24px; border: 1px solid #d6e1eb26; border-radius: 16px; background: #101d2b; box-shadow: 0 16px 60px #0006; }
+.star-nudge[hidden] { display: none; }
+.star-nudge h2 { margin: 10px 0; font-size: 19px; line-height: 1.3; font-weight: 400; letter-spacing: -.02em; }
+.star-nudge p { margin: 0; color: #aebdca; font-size: 12px; line-height: 1.6; }
+.star-nudge .nudge-status { padding-right: 18px; color: #a9c68c; font-size: 10px; }
+.star-nudge a { display: inline-flex; align-items: center; gap: 9px; margin-top: 18px; color: var(--lime); font-size: 12px; }
+.star-nudge a span:first-child { font-size: 21px; }
+.nudge-close { position: absolute; top: 5px; right: 5px; width: 38px; height: 38px; color: #aebdca; font-size: 23px; }
 @media (max-width: 900px) {
   .feature-section { grid-template-columns: 1fr; gap: 32px; padding: 64px 34px; }
   .feature-copy { max-width: none; }

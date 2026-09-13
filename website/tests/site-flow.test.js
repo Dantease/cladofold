@@ -21,11 +21,9 @@ test('the initial reveal completes before any feature scrolling begins', () => {
   assert.deepEqual(scrollDestination(0, 0, 2000, 550), { opening: .5, scrollTop: 0 });
   assert.deepEqual(scrollDestination(.5, 0, 2000, 1000), { opening: 1, scrollTop: 0 });
 });
-test('published downloads require an explicit star confirmation', () => {
-  assert.equal(downloadState(true, false), 'needs-star');
-  assert.equal(downloadState(true, true), 'ready');
+test('published downloads are available without any star confirmation', () => {
+  assert.equal(downloadState(true), 'ready');
 });
-test('confirming a star cannot expose a draft or missing download', () => {
-  assert.equal(downloadState(false, false), 'preparing');
-  assert.equal(downloadState(false, true), 'preparing');
+test('a draft or missing download remains unavailable', () => {
+  assert.equal(downloadState(false), 'preparing');
 });

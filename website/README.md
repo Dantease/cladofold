@@ -35,8 +35,8 @@ The headline pairs the system sans-serif with a Georgia italic second line. The 
 
 The model is CC BY 4.0. Preserve visible credit and `public/MODEL-LICENSE.txt` when sharing it. JavaScript source is MIT-licensed.
 
-## Star-before-download flow
+## Optional star prompt
 
-All download actions open one dialog. When the release is available, visitors can open the GitHub repository and explicitly confirm “I’ve starred cladofold. on GitHub” before continuing. This is an honor-system confirmation, not authenticated star verification. Opening the repository never counts as a star. The site collects no GitHub username, token, or account data and remembers confirmation only in page memory. Public GitHub releases remain directly accessible outside this site.
+Available releases download immediately through a normal file link. A small, dismissible prompt then invites visitors to star the repository; it never blocks the download or moves keyboard focus. The prompt appears once per page visit. The header also has a quiet GitHub star link. Starring is entirely optional, and the site collects no GitHub username, token, or account data.
 
-If the release is unavailable, the dialog shows “Preview coming soon” and cannot navigate to the missing artifact, even if a star was confirmed. The release-ready flag remains controlled by the Pages build’s artifact check.
+If the release is unavailable, a short dialog explains that the preview is being prepared and links to the releases page. It does not claim a download started or ask for a star. The release-ready flag remains controlled by the Pages build’s artifact check.

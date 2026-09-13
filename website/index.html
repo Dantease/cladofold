@@ -97,14 +97,19 @@
     <output id="fold-state" class="sr-only">MacBook closed</output>
     <p id="fallback-note" class="fallback-note" hidden>Animation isn’t available here. You can still download the app.</p>
 
-    <dialog id="star-download" aria-labelledby="star-title">
-      <div class="dialog-top"><span class="eyebrow">A SMALL THANK YOU</span><button class="dialog-close" aria-label="Close download step">×</button></div>
-      <h2 id="star-title">One little star.</h2>
-      <p id="star-description">Star cladofold. on GitHub, then come back for your download. It helps more people find the project.</p>
-      <a id="star-repository" class="star-action" href="https://github.com/Dantease/cladofold" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☆</span> Star on GitHub <span aria-hidden="true">↗</span></a>
-      <label class="star-confirmation"><input id="star-confirmed" type="checkbox" /> <span>I’ve starred cladofold. on GitHub.</span></label>
-      <button id="continue-download" class="primary-download" type="button" disabled>Continue to download <span aria-hidden="true">↓</span></button>
-      <p class="muted" id="download-status" aria-live="polite">Already starred? Confirm above to continue.</p>
+    <aside id="star-nudge" class="star-nudge" aria-labelledby="nudge-title" hidden>
+      <button class="nudge-close" type="button" aria-label="Dismiss star suggestion">×</button>
+      <p class="nudge-status" role="status"></p>
+      <h2 id="nudge-title">A little star goes a long way.</h2>
+      <p>A star helps more people find cladofold.</p>
+      <a href="https://github.com/Dantease/cladofold" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">☆</span> Star on GitHub <span aria-hidden="true">↗</span></a>
+    </aside>
+
+    <dialog id="download-unavailable" aria-labelledby="download-title">
+      <div class="dialog-top"><span class="eyebrow">ALMOST HERE</span><button class="dialog-close" aria-label="Close download information">×</button></div>
+      <h2 id="download-title">A softer close is on its way.</h2>
+      <p>The next preview is being prepared. Downloads will open here when it is ready.</p>
+      <a class="text-link" href="https://github.com/Dantease/cladofold/releases" target="_blank" rel="noopener noreferrer">Follow the releases <span aria-hidden="true">↗</span></a>
     </dialog>
 
     <dialog id="compatibility" aria-labelledby="compatibility-title">

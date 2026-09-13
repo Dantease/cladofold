@@ -1,46 +1,34 @@
-export function downloadState(releaseReady, starConfirmed) {
-  if (!releaseReady) return 'preparing';
-  return starConfirmed ? 'ready' : 'needs-star';
+export function downloadState(releaseReady) {
+  return releaseReady ? 'ready' : 'preparing';
 }
 
 export function setupDownloads(releaseReady, releaseUrl) {
-  const dialog = document.querySelector('#star-download');
-  const confirmation = document.querySelector('#star-confirmed');
-  const button = document.querySelector('#continue-download');
-  const status = document.querySelector('#download-status');
-  // An honest self-confirmation step, not a GitHub authentication check.
-  // Keep this choice only for this page visit; collect no account information.
-  let confirmed = false;
-  function update() {
-    const state = downloadState(releaseReady, confirmed);
-    button.disabled = state !== 'ready';
-    if (state === 'preparing') {
-      dialog.querySelector('.star-confirmation').hidden = true;
-      document.querySelector('#star-description').textContent = 'The next preview is being prepared. In the meantime, a star helps more people find cladofold.';
-      button.textContent = 'Preview coming soon';
-      status.textContent = 'Downloads will open here when the preview is ready.';
-    } else {
-      status.textContent = confirmed ? 'Thanks for supporting cladofold.' : 'Already starred? Confirm above to continue.';
-    }
-  }
+  const unavailableDialog = document.querySelector('#download-unavailable');
+  const nudge = document.querySelector('#star-nudge');
+  let prompted = false;
+
   document.querySelectorAll('.download-link').forEach(link => {
-    link.href = '#star-download';
-    link.setAttribute('aria-haspopup', 'dialog');
+    link.href = releaseReady ? releaseUrl : '#download-unavailable';
+    if (!releaseReady) link.setAttribute('aria-haspopup', 'dialog');
     link.addEventListener('click', event => {
-      event.preventDefault();
+      if (downloadState(releaseReady) === 'preparing') {
+        event.preventDefault();
+        document.querySelectorAll('dialog[open]').forEach(open => open.close());
+        unavailableDialog.showModal();
+        return;
+      }
+
+      // Keep the native download link: no star check, extra click, or delay.
+      // Modified clicks keep the browser's usual new-tab behavior too.
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       document.querySelectorAll('dialog[open]').forEach(open => open.close());
-      update();
-      dialog.showModal();
+      if (prompted) return;
+      prompted = true;
+      nudge.hidden = false;
+      nudge.querySelector('[role="status"]').textContent = 'Your download is starting.';
     });
   });
-  confirmation.addEventListener('change', () => { confirmed = confirmation.checked; update(); });
-  button.addEventListener('click', () => {
-    if (downloadState(releaseReady, confirmed) !== 'ready') return;
-    // Opening the repository does not itself add a star. The visitor explicitly
-    // confirms that action on GitHub before this link is available.
-    window.location.assign(releaseUrl);
-    dialog.close();
-  });
+
+  nudge.querySelector('button').addEventListener('click', () => { nudge.hidden = true; });
   if (!releaseReady) document.querySelector('.release-note').textContent = 'The new preview is being prepared';
-  update();
 }

@@ -42,3 +42,9 @@ Browser checks confirmed the tighter open frame at 1440×900, 855×998, 390×844
 Eighteen tests pass. New cases cover switching from lid movement to interior page scrolling, consuming only the remaining gesture beyond the page top when closing, keeping the lid open at the footer, requiring explicit star confirmation for an available release, and preventing confirmation from exposing a draft download.
 
 Browser review covered the looser headline and italic serif pairing, appearance presets and range inputs, response switches, mobile feature sections, footer download routing, and the unavailable-release dialog. The star step is self-confirmed; authenticated GitHub star verification is not implemented. The native app’s release remains gated by the runtime acceptance checks above.
+
+## Optional star prompt and custom domain — September 13, 2026
+
+The star-confirmation requirement above has been removed. Eighteen website tests and the production build pass. Available release links use normal browser downloads immediately; the optional star prompt is nonmodal, keeps focus on the clicked link, and appears only once per page visit. Browser checks used the real download module with a harmless local test file to exercise the available-release path at desktop and 390-pixel phone widths. Dismissal prevented the prompt from returning on another download click. The unpublished-release path showed preparation information without a star request. The temporary test fixture was removed before publication.
+
+Cloudflare DNS routes `cladofold.app` and `www.cladofold.app` to GitHub Pages. GitHub's DNS check succeeded, the certificate includes both hostnames, and HTTPS enforcement is enabled. The apex returned HTTP 200 over valid HTTPS. The native app's remaining runtime acceptance checks are unchanged.
