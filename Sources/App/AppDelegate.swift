@@ -316,6 +316,7 @@ import QuartzCore
         menu.addItem(enabled)
         menu.addItem(item("Settings…", action: #selector(showSettings), key: ","))
         menu.addItem(item("Open in System Settings…", action: #selector(openSystemSettings)))
+        menu.addItem(item("Use current lid angle as open", action: #selector(useCurrentOpenAngle)))
         menu.addItem(item(previewStart == nil ? "Preview for 6 seconds" : "Stop preview", action: #selector(togglePreview)))
         if !permission {
             menu.addItem(item("Allow Screen Recording…", action: #selector(requestPermission)))
@@ -343,6 +344,13 @@ import QuartzCore
         frameIntervals.removeAll(keepingCapacity: true)
         setAnimationActive(true)
         captureRetryAfter = .distantPast
+    }
+
+    @objc private func useCurrentOpenAngle() {
+        guard let angle, Date().timeIntervalSince(sampleTime) < 0.6 else { return }
+        clear()
+        motion.setOpenAngle(angle, time: Date().timeIntervalSinceReferenceDate)
+        publishStatus()
     }
 
     @objc func showSettings() {
@@ -456,6 +464,7 @@ import QuartzCore
         case "systemSettings": openSystemSettings()
         case "permission": requestPermission()
         case "recheck": recheckCaptureAccess()
+        case "calibrate": useCurrentOpenAngle()
         case "preview": if previewStart == nil { togglePreview() }
         case "stopPreview": clear()
         case "disable": disableEffect()

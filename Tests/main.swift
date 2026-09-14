@@ -102,3 +102,40 @@ check(abs(opening + closingFrame - 1) < 0.000001, "Opening and closing have matc
 check(BlurMath.follow(0.2, toward: 0.7, elapsed: 1.0 / 120, duration: 0) == 0.7, "Zero smoothing still provides direct sensor response")
 check(BlurMath.follow(0.4, toward: 0.8, elapsed: 0, duration: 0.12) == 0.4, "No elapsed time must not advance the fold")
 print("Passed \(count) total behavior checks including whole-degree interpolation at 60/120 Hz")
+
+var calibrated = LidMotion()
+let cycleSettings = BlurSettings()
+_ = calibrated.target(angle: 118, time: 0, settings: cycleSettings)
+_ = calibrated.target(angle: 102, time: 1, settings: cycleSettings)
+calibrated.setOpenAngle(102, time: 2)
+check(calibrated.openAngle == 102 && calibrated.target(angle: 102, time: 2.1, settings: cycleSettings) == 0, "Follow my lid replaces an older wider reference with the current 102-degree angle")
+check(calibrated.target(angle: 101, time: 2.2, settings: cycleSettings) > 0, "Calibration retains first-degree closing onset")
+let partial = calibrated.target(angle: 68, time: 3, settings: cycleSettings)
+check(calibrated.target(angle: 68, time: 100, settings: cycleSettings) == partial && calibrated.openAngle == 102, "A held partial fold does not move the calibrated reference")
+check(calibrated.target(angle: 90, time: 101, settings: cycleSettings) > 0 && calibrated.openAngle == 102, "Partial reopening keeps the same reference")
+check(calibrated.target(angle: 102, time: 102, settings: cycleSettings) == 0, "Returning to 102 degrees clears without pushing farther")
+var cyclesClear = true
+for cycle in 0..<20 {
+    _ = calibrated.target(angle: 60, time: Double(103 + cycle * 2), settings: cycleSettings)
+    cyclesClear = cyclesClear && calibrated.target(angle: 102, time: Double(104 + cycle * 2), settings: cycleSettings) == 0 && calibrated.openAngle == 102
+}
+check(cyclesClear, "Repeated fold cycles do not accumulate a wider reopening threshold")
+calibrated.setOpenAngle(103, time: 200)
+_ = calibrated.target(angle: 60, time: 201, settings: cycleSettings)
+check(calibrated.target(angle: 101, time: 202, settings: cycleSettings) > 0, "Return tolerance does not prematurely clear a two-degree partial fold")
+check(calibrated.target(angle: 102, time: 203, settings: cycleSettings) == 0 && calibrated.openAngle == 102, "A one-degree sensor discrepancy clears and anchors the next cycle at the returned angle")
+_ = calibrated.target(angle: 60, time: 204, settings: cycleSettings)
+check(calibrated.target(angle: 30, time: 205, settings: cycleSettings) == 1, "Calibration preserves the 30-degree blackout")
+calibrated.setOpenAngle(.nan, time: 206)
+check(calibrated.openAngle == nil, "Invalid calibration cannot poison the reference")
+
+var previewOnly = BlurSettings()
+previewOnly.enabled = false
+let previewFold = LidPreviewMath.progress(angle: 70, reference: 102, settings: previewOnly)
+check(previewFold > 0 && !previewOnly.enabled, "The miniature preview works while the desktop effect stays disabled")
+check(LidPreviewMath.progress(angle: 102, reference: 102, settings: previewOnly) == 0, "The preview uses the selected starting angle")
+check(LidPreviewMath.appearanceProgress(from: 0) == 0.55 && LidPreviewMath.appearanceProgress(from: 1) == 0.55, "Appearance edits are visible even with a fully open or black preview")
+check(LidPreviewMath.appearanceProgress(from: 0.4) == 0.4, "Appearance editing preserves an already readable partial fold")
+previewOnly.automaticStart = false
+check(LidPreviewMath.progress(angle: 50, reference: 102, settings: previewOnly) == 0.5, "The independent preview respects manual angle thresholds")
+print("Passed \(count) total behavior checks including calibrated cycles and live appearance previews")

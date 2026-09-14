@@ -94,6 +94,22 @@ let atBlack = foldBytes(white, progress: angleMotion.target(angle: 30, time: 2, 
 precondition(stride(from: 0, to: atBlack.count, by: 4).allSatisfy { atBlack[$0] == 0 && atBlack[$0+3] == 255 }, "The 30-degree endpoint must render opaque black")
 print("Passed 2 30-degree endpoint checks")
 
+var appearance = BlurSettings()
+appearance.enabled = false
+appearance.duoStyle = false
+appearance.progressiveBlur = false
+let editProgress = LidPreviewMath.appearanceProgress(from: 0)
+appearance.radius = 0
+let editClear = foldBytes(input, progress: editProgress, settings: appearance)
+appearance.radius = 80
+let editBlurred = foldBytes(input, progress: editProgress, settings: appearance)
+precondition(contrast(editClear, y: 128) > contrast(editBlurred, y: 128) + 100, "Changing maximum blur must visibly update the adjustment preview with the desktop effect disabled")
+appearance.duoStyle = true
+let duoBlurred = foldBytes(input, progress: editProgress, settings: appearance)
+appearance.radius = 0
+precondition(foldBytes(input, progress: editProgress, settings: appearance) != duoBlurred, "Duo preview must also respond to the strength slider")
+print("Passed 2 live appearance rendering checks")
+
 // A synthetic contact sheet for visual review; never uses a desktop capture.
 let previewFolder = URL(fileURLWithPath: "build/fold-review", isDirectory: true)
 try FileManager.default.createDirectory(at: previewFolder, withIntermediateDirectories: true)

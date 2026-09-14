@@ -102,6 +102,15 @@ struct LidMotion {
 
     mutating func reset() { self = LidMotion() }
 
+    /// An explicit follow/calibration action starts a new cycle at this angle.
+    mutating func setOpenAngle(_ angle: Double, time: Double) {
+        reset()
+        guard angle.isFinite, (0...180).contains(angle) else { return }
+        openAngle = angle
+        previousAngle = angle
+        lastMovement = time
+    }
+
     mutating func target(angle: Double, time: Double, settings: BlurSettings) -> Double {
         guard angle.isFinite, (0...180).contains(angle), settings.enabled else {
             reset(); return 0
@@ -119,12 +128,36 @@ struct LidMotion {
             return 0
         }
         guard settings.automaticStart else { return BlurMath.progress(angle: angle, settings: settings) }
-        let reference = max(openAngle ?? angle, angle)
-        openAngle = reference
+        let reference = openAngle ?? previousAngle
+        // Freeze the reference throughout a partial fold. At the return point,
+        // start a fresh cycle instead of retaining the session's highest angle.
+        // One degree of return tolerance accommodates the integer HID readings;
+        // it applies only while reopening, so the first closing degree still works.
+        if angle >= reference || (angle > previousAngle && angle >= reference - 1) {
+            openAngle = angle
+            return 0
+        }
         let end = min(settings.nearClosedAngle, max(0, reference - 10))
         // Half a degree suppresses the numerical boundary without waiting through
         // a large fixed-angle dead zone. HID reports arrive in whole degrees.
         let t = min(1, max(0, (reference - angle - 0.5) / max(0.5, reference - end - 0.5)))
         return t
+    }
+}
+
+enum LidPreviewMath {
+    static func progress(angle: Double, reference: Double, settings: BlurSettings) -> Double {
+        var previewSettings = settings
+        previewSettings.enabled = true
+        guard previewSettings.automaticStart else { return BlurMath.progress(angle: angle, settings: previewSettings) }
+        var motion = LidMotion()
+        motion.setOpenAngle(reference, time: 0)
+        return motion.target(angle: angle, time: 0.1, settings: previewSettings)
+    }
+
+    /// At clear or black, appearance edits are invisible. Use a readable sample
+    /// fold for adjustment, without changing the real lid or desktop effect.
+    static func appearanceProgress(from progress: Double) -> Double {
+        (0.15...0.85).contains(progress) ? progress : 0.55
     }
 }

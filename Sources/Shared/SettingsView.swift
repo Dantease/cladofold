@@ -6,6 +6,8 @@ struct SettingsView: View {
     @StateObject private var status = RuntimeStatus()
     @State private var simulatedAngle = 105.0
     @State private var followLid = false
+    @State private var previewReferenceAngle = 110.0
+    @State private var appearancePreview: Double?
     @State private var showCompatibility = false
     var isPreferencePane = false
     var onCommand: ((String) -> Void)? = nil
@@ -21,13 +23,9 @@ struct SettingsView: View {
     }
     private var angle: Double { followLid ? (status.angle ?? simulatedAngle) : simulatedAngle }
     private var progress: Double {
-        if followLid { return status.progress }
-        if preferences.settings.automaticStart {
-            var motion = LidMotion()
-            _ = motion.target(angle: 110, time: 0, settings: preferences.settings)
-            return motion.target(angle: angle, time: 0.1, settings: preferences.settings)
-        }
-        return BlurMath.progress(angle: angle, settings: preferences.settings)
+        if let appearancePreview { return appearancePreview }
+        if followLid && preferences.settings.enabled { return status.progress }
+        return LidPreviewMath.progress(angle: angle, reference: followLid ? previewReferenceAngle : 110, settings: preferences.settings)
     }
 
     var body: some View {
@@ -87,7 +85,8 @@ struct SettingsView: View {
                     HStack {
                         Label("LID PREVIEW", systemImage: "viewfinder").font(.system(size: 10, weight: .semibold, design: .rounded)).tracking(1.4)
                         Spacer()
-                        Text("\(Int(angle))°").font(.system(.body, design: .monospaced)).foregroundStyle(accent)
+                        Text(appearancePreview == nil ? "\(Int(angle))°" : "Appearance preview")
+                            .font(.system(.body, design: .monospaced)).foregroundStyle(accent)
                     }.foregroundStyle(.secondary)
                     HStack(spacing: 25) {
                         FoldPreview(progress: progress, settings: preferences.settings)
@@ -102,13 +101,27 @@ struct SettingsView: View {
                     }.padding(.vertical, 5)
                     HStack {
                         Image(systemName: "laptopcomputer").foregroundStyle(.secondary)
-                        Slider(value: $simulatedAngle, in: 0...130).disabled(followLid).accessibilityLabel("Preview lid angle")
-                        Text("\(Int(simulatedAngle))°").monospacedDigit().frame(width: 35, alignment: .trailing)
+                        Slider(value: Binding(get: { simulatedAngle }, set: { appearancePreview = nil; simulatedAngle = $0 }), in: 0...130)
+                            .disabled(followLid).accessibilityLabel("Preview lid angle")
+                        Text("\(Int(angle))°").monospacedDigit().frame(width: 35, alignment: .trailing)
                     }
                     HStack {
                         Toggle("Follow my lid", isOn: $followLid).disabled(status.angle == nil)
                         Spacer()
-                        Text("Drag to try it without moving your Mac.").font(.caption).foregroundStyle(.secondary)
+                        if appearancePreview != nil {
+                            Button(followLid ? "Return to lid" : "Return to angle") { appearancePreview = nil }
+                                .buttonStyle(.link).font(.caption)
+                        } else {
+                            Text(followLid ? "Your starting angle is the clear position." : "Drag to try it without moving your Mac.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    if followLid && preferences.settings.automaticStart {
+                        Button("Use current angle as open") {
+                            appearancePreview = nil
+                            previewReferenceAngle = status.angle ?? previewReferenceAngle
+                            sendCommand("calibrate")
+                        }.buttonStyle(.link).font(.caption)
                     }
                 }.padding(17).background(accent.opacity(0.055), in: RoundedRectangle(cornerRadius: 13))
 
@@ -129,10 +142,10 @@ struct SettingsView: View {
                     Divider().padding(.horizontal, 13)
                     Toggle("Duo fold animation", isOn: $preferences.settings.duoStyle)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13).padding(.vertical, 8)
-                    settingSlider("Dark border", value: $preferences.settings.borderDepth, range: 0...1.5, display: "\(Int(preferences.settings.borderDepth * 100))%")
+                    settingSlider("Dark border", value: $preferences.settings.borderDepth, range: 0...1.5, display: "\(Int(preferences.settings.borderDepth * 100))%", previewsAppearance: true)
                         .disabled(!preferences.settings.duoStyle)
-                    settingSlider("Maximum blur", value: $preferences.settings.radius, range: 0...80, display: "\(Int(preferences.settings.radius)) pt")
-                    settingSlider("Darkening", value: $preferences.settings.dimming, range: 0...0.65, display: "\(Int(preferences.settings.dimming * 100))%")
+                    settingSlider("Maximum blur", value: $preferences.settings.radius, range: 0...80, display: "\(Int(preferences.settings.radius)) pt", previewsAppearance: true)
+                    settingSlider("Darkening", value: $preferences.settings.dimming, range: 0...0.65, display: "\(Int(preferences.settings.dimming * 100))%", previewsAppearance: true)
                     Toggle("Progressive blur from the hinge", isOn: $preferences.settings.progressiveBlur)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13).padding(.vertical, 8)
                     Divider().padding(.horizontal, 13)
@@ -182,12 +195,25 @@ struct SettingsView: View {
         .frame(width: 610, height: 780)
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(accent)
+        .onChange(of: followLid) { _, following in
+            appearancePreview = nil
+            if following {
+                previewReferenceAngle = status.angle ?? 110
+                sendCommand("calibrate")
+            }
+        }
+        .onChange(of: status.angle) { old, new in
+            if followLid && old != new { appearancePreview = nil }
+        }
+        .onChange(of: preferences.settings.duoStyle) { _, _ in showAppearancePreview() }
+        .onChange(of: preferences.settings.progressiveBlur) { _, _ in showAppearancePreview() }
         .sheet(isPresented: $showCompatibility) {
             CompatibilityView(angle: status.angle, running: status.running, permission: status.permission)
         }
     }
 
     private func preset(_ radius: Double, _ dimming: Double, _ smoothing: Double) {
+        showAppearancePreview()
         var value = preferences.settings
         value.radius = radius; value.dimming = dimming; value.smoothing = smoothing
         preferences.settings = value
@@ -197,10 +223,17 @@ struct SettingsView: View {
         if let onCommand { onCommand(command) } else { status.command(command) }
     }
 
-    private func settingSlider(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, display: String) -> some View {
+    private func showAppearancePreview() {
+        appearancePreview = LidPreviewMath.appearanceProgress(from: progress)
+    }
+
+    private func settingSlider(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, display: String, previewsAppearance: Bool = false) -> some View {
         HStack(spacing: 15) {
             Text(title).frame(width: 112, alignment: .leading)
-            Slider(value: value, in: range).accessibilityLabel(title)
+            Slider(value: Binding(get: { value.wrappedValue }, set: { next in
+                if previewsAppearance { showAppearancePreview() }
+                value.wrappedValue = next
+            }), in: range).accessibilityLabel(title)
             Text(display).font(.system(.callout, design: .monospaced)).foregroundStyle(.secondary).frame(width: 60, alignment: .trailing)
         }.padding(.horizontal, 13).padding(.vertical, 8)
     }
@@ -224,6 +257,7 @@ struct SettingsView: View {
         guard view.lastProgress != progress || view.lastSettings != settings, let source = view.source else { return }
         view.lastProgress = progress
         view.lastSettings = settings
+        view.setAccessibilityLabel("Lid preview, \(Int(progress * 100)) percent folded, \(Int(settings.radius)) point maximum blur")
         // At 255 points, this is a scale model of an approximately 1512-point display.
         let result = BlurFilter.fold(image: source, progress: progress, settings: settings, pixelsPerPoint: 510.0 / 1512)
         if let cgImage = view.renderer.createCGImage(result, from: source.extent) {

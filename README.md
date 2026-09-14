@@ -27,7 +27,9 @@ The top switch toggles the effect. **Duo fold animation** adds a hinge-anchored 
 
 Adjust maximum blur, darkening, smoothing, and progressive blur from the hinge. Settings save immediately and synchronize between the app and the System Settings pane. **Duo** selects the new animation with a 48 pt blur and quicker response; **Subtle**, **Balanced**, and **Dreamy** change blur, darkening, and smoothing. Presets preserve your angle thresholds and login preference.
 
-The miniature preview works without screen permission and uses the same renderer as the desktop effect on synthetic content. Drag its angle slider or enable **Follow my lid**. **Preview on my screen** runs a six-second closing/opening animation. **Control–Option–Command–B** immediately disables the effect. You can also disable it or quit from the cf. button in the menu bar. An orange menu-bar mark means the effect is not ready; open settings for the reason.
+The miniature preview works without screen permission, including when the desktop effect is off, and uses the same renderer on synthetic content. Drag its angle slider or enable **Follow my lid**. Selecting Follow uses your current lid angle as the clear position; use **Use current angle as open** if you change your working position. The reference stays fixed through a partial close and hold, then clears when you return to it.
+
+Blur strength, darkening, border depth, and appearance toggles update the miniature immediately. If it is fully clear or black, adjusting appearance shows a partly folded sample so the change is visible. Move the lid or choose **Return to lid** to resume following it. **Preview on my screen** runs a six-second closing/opening animation. **Control–Option–Command–B** immediately disables the effect. You can also disable it or quit from the cf. button in the menu bar. An orange menu-bar mark means the effect is not ready; open settings for the reason.
 
 **Launch at login** uses Apple's ServiceManagement API. Login-item approval, if required by macOS, is managed in **General → Login Items & Extensions**.
 
@@ -71,7 +73,7 @@ To remove cladofold., turn off Launch at login, quit it, then move `~/Applicatio
 
 - SwiftUI provides shared controls hosted by both AppKit and `NSPreferencePane`.
 - CFPreferences plus distributed change notifications synchronize settings between processes.
-- IOKit HID feature report 1 supplies the angle on a serial background queue at 30 Hz. Main-thread interpolation runs at 60 Hz; rendering stops when the effect is hidden or stationary. Only one Metal frame is submitted at a time, so a busy GPU skips to the newest angle instead of queuing older frames.
+- IOKit HID feature report 1 supplies the angle on a serial background queue at 60 Hz. The built-in display's CADisplayLink interpolates whole-degree readings at up to 120 Hz; rendering stops when the effect is hidden or stationary. Opening and closing use the same smoothing response, with immediate clear and black endpoints.
 - ScreenCaptureKit captures a single Retina desktop frame per fold. Display metadata and reusable GPU resources are prepared ahead of time. A tiny transient permission-check frame is also captured when verifying access. Core Image projects it through a hinge-anchored perspective transform onto black, then applies variable-radius hinge blur and spatial shading. Black participates in the blur so margins feather naturally. Metal presents the result.
 - A generation guard invalidates asynchronous captures after disabling, sleep, or sensor loss. The six-second preview is bounded, and the keyboard shortcut is registered through Carbon without monitoring keystrokes.
 
