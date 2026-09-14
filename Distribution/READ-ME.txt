@@ -44,13 +44,17 @@ versions need real-device testing. There is no model whitelist: any Mac exposing
 Apple's compatible sensor can work, including future models.
 
 USE
-Start with your lid at a comfortable angle. Closing begins the effect from there.
+Start with your lid at a comfortable angle. Closing begins 3° below that position;
+reopening clears within 1°. This buffer ignores tiny sensor fluctuations.
 “Black at” controls the full-darkness endpoint (30° above fully closed by default).
 Reopen to your starting angle
 to clear. Blur stays at a held angle by default; turn off “Keep blur until I open
 the lid back up” to clear after half a second of stillness. Turn off “Start when
 I begin closing” to choose manual angle thresholds.
 “Duo fold animation” adds the dark borders, perspective, blur and fade to black.
+“Vacuum reveal” optionally draws the image toward the bottom hinge and reveals
+it upward on reopening. Switching it on plays a demonstration in the lid preview;
+“Replay vacuum reveal” repeats it. Switch it off to restore the original look.
 “Dark border”, “Maximum blur”, “Darkening” and “Smoothing” adjust the effect.
 The menu-bar cf. button also provides settings, preview and Quit.
 Control–Option–Command–B disables the effect immediately.

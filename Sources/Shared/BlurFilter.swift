@@ -7,7 +7,7 @@ enum BlurFilter {
     static func fold(image: CIImage, progress: Double, settings: BlurSettings, pixelsPerPoint: Double = 1) -> CIImage {
         let p = BlurSettings.clamp(progress, 0...1, fallback: 0)
         guard p > 0.00001 else { return image }
-        guard settings.duoStyle else {
+        guard settings.duoStyle || settings.vacuumReveal else {
             return output(image: image, radius: settings.radius * p * pixelsPerPoint, dimming: settings.dimming * p, progressive: settings.progressiveBlur)
         }
         let bounds = image.extent
@@ -23,12 +23,20 @@ enum BlurFilter {
         // the sides pull inward. This stays bounded throughout the closing arc.
         // The old denominator can exceed one near the open end, leaving a black
         // horizontal strip. Keep the projected top beyond the blur's support too.
-        let height = max(bounds.height + max(2, radius * 3), bounds.height / (cosine + depth))
-        let inset = bounds.width * 0.5 * depth / (cosine + depth)
+        let height = settings.vacuumReveal
+            ? bounds.height * (1 - 0.92 * pow(p, 1.35))
+            : max(bounds.height + max(2, radius * 3), bounds.height / (cosine + depth))
+        let inset = settings.vacuumReveal
+            ? bounds.width * 0.18 * settings.borderDepth * p
+            : bounds.width * 0.5 * depth / (cosine + depth)
+        // Optional reveal compresses toward the bottom hinge when closing and
+        // grows upward when opening. It shares one reversible curve and renderer
+        // with the settings preview; it does not add a delayed desktop overlay.
+        let bottomInset = settings.vacuumReveal ? bounds.width * 0.075 * p * p : 0
         let projection = CIFilter.perspectiveTransform()
         projection.inputImage = image
-        projection.bottomLeft = CGPoint(x: bounds.minX, y: bounds.minY)
-        projection.bottomRight = CGPoint(x: bounds.maxX, y: bounds.minY)
+        projection.bottomLeft = CGPoint(x: bounds.minX + bottomInset, y: bounds.minY)
+        projection.bottomRight = CGPoint(x: bounds.maxX - bottomInset, y: bounds.minY)
         projection.topLeft = CGPoint(x: bounds.minX + inset, y: bounds.minY + height)
         projection.topRight = CGPoint(x: bounds.maxX - inset, y: bounds.minY + height)
         var projected = (projection.outputImage ?? image).composited(over: black)

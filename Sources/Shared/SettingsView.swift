@@ -8,6 +8,8 @@ struct SettingsView: View {
     @State private var followLid = false
     @State private var previewReferenceAngle = 110.0
     @State private var appearancePreview: Double?
+    @State private var revealStarted: Date?
+    @State private var revealTask: Task<Void, Never>?
     @State private var showCompatibility = false
     var isPreferencePane = false
     var onCommand: ((String) -> Void)? = nil
@@ -85,39 +87,46 @@ struct SettingsView: View {
                     HStack {
                         Label("LID PREVIEW", systemImage: "viewfinder").font(.system(size: 10, weight: .semibold, design: .rounded)).tracking(1.4)
                         Spacer()
-                        Text(appearancePreview == nil ? "\(Int(angle))°" : "Appearance preview")
+                        Text(revealStarted != nil ? "Vacuum reveal preview" : (appearancePreview == nil ? "\(Int(angle))°" : "Appearance preview"))
                             .font(.system(.body, design: .monospaced)).foregroundStyle(accent)
                     }.foregroundStyle(.secondary)
-                    HStack(spacing: 25) {
+                    TimelineView(.animation(minimumInterval: 1.0 / 60, paused: revealStarted == nil)) { timeline in
+                      let progress = revealStarted.map { LidPreviewMath.revealProgress(elapsed: timeline.date.timeIntervalSince($0)) } ?? self.progress
+                      HStack(spacing: 25) {
                         FoldPreview(progress: progress, settings: preferences.settings)
                         .frame(width: 255, height: 143).clipShape(RoundedRectangle(cornerRadius: 7))
                         .padding(5).background(Color.black.opacity(0.85), in: RoundedRectangle(cornerRadius: 11))
                         .overlay(alignment: .bottom) { Capsule().fill(Color.gray).frame(width: 290, height: 5).offset(y: 6) }
                         VStack(alignment: .leading, spacing: 7) {
                             Text(progress < 0.01 ? "Crystal clear" : "\(Int(progress * 100))% folded").font(.system(size: 17, weight: .medium))
-                            Text("Close to draw the image into soft dark borders. Open to bring it back into focus.")
+                            Text(preferences.settings.vacuumReveal ? "Close to draw the image toward the hinge. Open to reveal it slowly from the bottom." : "Close to draw the image into soft dark borders. Open to bring it back into focus.")
                                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         }
                     }.padding(.vertical, 5)
+                    }
                     HStack {
                         Image(systemName: "laptopcomputer").foregroundStyle(.secondary)
-                        Slider(value: Binding(get: { simulatedAngle }, set: { appearancePreview = nil; simulatedAngle = $0 }), in: 0...130)
+                        Slider(value: Binding(get: { simulatedAngle }, set: { stopRevealPreview(); appearancePreview = nil; simulatedAngle = $0 }), in: 0...130)
                             .disabled(followLid).accessibilityLabel("Preview lid angle")
                         Text("\(Int(angle))°").monospacedDigit().frame(width: 35, alignment: .trailing)
                     }
                     HStack {
                         Toggle("Follow my lid", isOn: $followLid).disabled(status.angle == nil)
                         Spacer()
-                        if appearancePreview != nil {
-                            Button(followLid ? "Return to lid" : "Return to angle") { appearancePreview = nil }
+                        if appearancePreview != nil || revealStarted != nil {
+                            Button(followLid ? "Return to lid" : "Return to angle") { stopRevealPreview(); appearancePreview = nil }
                                 .buttonStyle(.link).font(.caption)
                         } else {
                             Text(followLid ? "Your starting angle is the clear position." : "Drag to try it without moving your Mac.")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
+                    if preferences.settings.vacuumReveal {
+                        Button("Replay vacuum reveal") { playRevealPreview() }.buttonStyle(.link).font(.caption)
+                    }
                     if followLid && preferences.settings.automaticStart {
                         Button("Use current angle as open") {
+                            stopRevealPreview()
                             appearancePreview = nil
                             previewReferenceAngle = status.angle ?? previewReferenceAngle
                             sendCommand("calibrate")
@@ -142,6 +151,9 @@ struct SettingsView: View {
                     Divider().padding(.horizontal, 13)
                     Toggle("Duo fold animation", isOn: $preferences.settings.duoStyle)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13).padding(.vertical, 8)
+                    Toggle("Vacuum reveal", isOn: $preferences.settings.vacuumReveal)
+                        .toggleStyle(.switch)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13).padding(.vertical, 8)
                     settingSlider("Dark border", value: $preferences.settings.borderDepth, range: 0...1.5, display: "\(Int(preferences.settings.borderDepth * 100))%", previewsAppearance: true)
                         .disabled(!preferences.settings.duoStyle)
                     settingSlider("Maximum blur", value: $preferences.settings.radius, range: 0...80, display: "\(Int(preferences.settings.radius)) pt", previewsAppearance: true)
@@ -152,7 +164,7 @@ struct SettingsView: View {
                     Toggle("Start when I begin closing", isOn: $preferences.settings.automaticStart)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13).padding(.vertical, 8)
                     if preferences.settings.automaticStart {
-                        Text(status.openAngle.map { "Following your \(Int($0))° open position." } ?? "Follows the open position you start from.")
+                        Text((status.openAngle.map { "Following your \(Int($0))° open position." } ?? "Follows the open position you start from.") + " Ignores tiny movements: starts 3° below open and clears within 1°.")
                             .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 13)
                         settingSlider(preferences.settings.duoStyle ? "Black at" : "Full blur at", value: $preferences.settings.nearClosedAngle, range: 0...30, display: "\(Int(preferences.settings.nearClosedAngle))°")
                         Text(preferences.settings.duoStyle ? "Lid angle above fully closed. Blur begins earlier; full darkness waits until this angle." : "Lid angle above fully closed. The blur reaches its maximum at this angle.")
@@ -196,6 +208,7 @@ struct SettingsView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(accent)
         .onChange(of: followLid) { _, following in
+            stopRevealPreview()
             appearancePreview = nil
             if following {
                 previewReferenceAngle = status.angle ?? 110
@@ -207,6 +220,11 @@ struct SettingsView: View {
         }
         .onChange(of: preferences.settings.duoStyle) { _, _ in showAppearancePreview() }
         .onChange(of: preferences.settings.progressiveBlur) { _, _ in showAppearancePreview() }
+        .onChange(of: preferences.settings.vacuumReveal) { _, enabled in
+            if enabled { playRevealPreview() }
+            else { stopRevealPreview(); showAppearancePreview() }
+        }
+        .onDisappear { stopRevealPreview() }
         .sheet(isPresented: $showCompatibility) {
             CompatibilityView(angle: status.angle, running: status.running, permission: status.permission)
         }
@@ -224,7 +242,27 @@ struct SettingsView: View {
     }
 
     private func showAppearancePreview() {
+        stopRevealPreview()
         appearancePreview = LidPreviewMath.appearanceProgress(from: progress)
+    }
+
+    private func stopRevealPreview() {
+        revealTask?.cancel()
+        revealTask = nil
+        revealStarted = nil
+    }
+
+    private func playRevealPreview() {
+        stopRevealPreview()
+        appearancePreview = nil
+        revealStarted = Date()
+        revealTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.8))
+            guard !Task.isCancelled else { return }
+            revealStarted = nil
+            appearancePreview = 0
+            revealTask = nil
+        }
     }
 
     private func settingSlider(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, display: String, previewsAppearance: Bool = false) -> some View {

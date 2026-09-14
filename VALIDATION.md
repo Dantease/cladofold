@@ -2,6 +2,18 @@
 
 Build host: Apple silicon MacBook Pro (M5 Max), macOS 26.6.2, Apple Swift 6.3.3.
 
+## Build 13 — open-angle buffer and optional vacuum reveal
+
+This is the current installed candidate. The numbered build sections below remain historical records.
+
+- 149 local checks pass: 74 motion/preferences/demo behavior checks, 25 capture-recovery checks, 45 synthetic Core Image rendering checks, and 5 installer checks. The universal arm64/x86_64 app and settings pane both compile and pass strict signature verification.
+- The new 3° closing / 1° clearing hysteresis keeps the calibrated reference fixed across small sensor fluctuations. Two 400-reading jitter sequences, before and after a fold, remain clear without reference drift. A deliberate fold still starts, a partial held fold remains visible, and full darkness remains at 30°. This intentionally supersedes build 11's first-degree onset and build 12's reference changes inside the one-degree return band.
+- Vacuum reveal defaults off, preserving existing users' appearance. The optional renderer compresses the display toward the bottom hinge on closing and expands it upward on reopening, using the existing blur and smoothing controls. Synthetic checks cover bottom-first emergence, advancing reveal height, clear/black endpoints, opacity, translated bounds, and exact restoration of the old renderer when disabled.
+- Native UI checks verified enabling the switch immediately plays a 2.4-second miniature opening, followed by a brief clear hold; Replay repeats it, and Return to lid/angle cancels it. The demonstration works with Follow selected and the desktop effect off. Enabling persisted through a normal quit/relaunch. The switch was returned to off after testing, and the owner's other appearance values were preserved.
+- Screen access was refreshed only for `com.dante.Foldable` under the owner's standing authorization, then verified by the app. A normal restart retained verified capture. The six-second desktop preview with vacuum enabled reached the fold and returned to a hidden overlay at progress zero. Initial capture took 24.9 ms; final sampled display callback cadence was 119.4 Hz, p95 interval 8.39 ms. These are callback observations, not a physical-lid or end-to-end presentation benchmark.
+- Installed app, ZIP extraction, and read-only DMG app executables match SHA-256 `218a36e093f860be5a0c3d1b9277dea0005968e069ab6fb623acb3d659d5646e`. Packaged bundles pass strict signature verification. DMG checksum and both manifest entries pass. DMG SHA-256: `c6038a02fadd7833d7d196e4ce8a3878ca4071cc0f08f82774d95df7295bd2d4`; ZIP: `60d341a10805dfcc5409059172ae14ddbd14c42f99496cbe243b50e28cd92037`.
+- Physical reopening acceptance is pending. The user's prior report was a brief glitch near the clear angle; the new jitter tests address a reproducible cause in the target logic but do not establish that every observed display glitch is resolved. Public download remains 1.3.0 build 9 pending approval.
+
 ## Automated checks
 
 - 63 behavior checks: first-degree closing onset, held partial folds, immediate full clear and full black, near-closed endpoints, optional clear on stillness, invalid readings, manual mode, lifecycle resets, preference migration, and whole-degree interpolation at 60/120 Hz. New cases reproduce selecting Follow at 102° after a wider reference, repeated close/reopen cycles, one-degree return tolerance, and appearance previews with the desktop effect disabled. Reversal starts on the next frame, both directions use the same response, and maximum smoothing has a bounded settling time.

@@ -110,6 +110,27 @@ appearance.radius = 0
 precondition(foldBytes(input, progress: editProgress, settings: appearance) != duoBlurred, "Duo preview must also respond to the strength slider")
 print("Passed 2 live appearance rendering checks")
 
+var vacuum = BlurSettings()
+vacuum.radius = 8
+let originalFold = foldBytes(white, progress: 0.55, settings: vacuum)
+vacuum.vacuumReveal = true
+let emerged = foldBytes(white, progress: 0.55, settings: vacuum)
+precondition(light(emerged, x: 128, y: 24) < 5 && light(emerged, x: 128, y: 220) > 100, "Vacuum reveal emerges from the bottom while the top is still black")
+precondition(emerged != originalFold, "Turning vacuum reveal on visibly changes the fold")
+precondition(foldBytes(input, progress: 0, settings: vacuum) == clear, "Vacuum reveal finishes at the unmodified desktop")
+precondition(foldBytes(white, progress: 1, settings: vacuum) == closed, "Vacuum reveal starts at opaque black")
+let earlierReveal = foldBytes(white, progress: 0.75, settings: vacuum)
+let laterReveal = foldBytes(white, progress: 0.25, settings: vacuum)
+precondition(light(laterReveal, x: 128, y: 128) > light(earlierReveal, x: 128, y: 128) + 100, "The reveal front rises through the screen as the lid opens")
+for p in [0.02, 0.25, 0.55, 0.9] {
+    let frame = foldBytes(input, progress: p, settings: vacuum)
+    precondition(stride(from: 3, to: frame.count, by: 4).allSatisfy { frame[$0] == 255 }, "Vacuum projection cannot expose transparent gaps")
+}
+_ = foldBytes(white.transformed(by: CGAffineTransform(translationX: 31, y: 19)), progress: 0.55, settings: vacuum)
+vacuum.vacuumReveal = false
+precondition(foldBytes(white, progress: 0.55, settings: vacuum) == originalFold, "Turning vacuum off restores the exact original fold")
+print("Passed 11 vacuum reveal rendering checks")
+
 // A synthetic contact sheet for visual review; never uses a desktop capture.
 let previewFolder = URL(fileURLWithPath: "build/fold-review", isDirectory: true)
 try FileManager.default.createDirectory(at: previewFolder, withIntermediateDirectories: true)

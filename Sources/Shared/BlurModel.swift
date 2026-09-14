@@ -14,13 +14,14 @@ struct BlurSettings: Equatable, Codable {
     var automaticStart = true
     var nearClosedAngle = 30.0
     var holdWhenStill = true
+    var vacuumReveal = false
 
     init() {}
 
     // New controls must not discard the user's previously saved settings.
     private enum CodingKeys: String, CodingKey {
         case enabled, radius, startAngle, endAngle, smoothing, dimming, progressiveBlur, launchAtLogin, duoStyle, borderDepth
-        case automaticStart, nearClosedAngle, holdWhenStill
+        case automaticStart, nearClosedAngle, holdWhenStill, vacuumReveal
     }
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -37,6 +38,7 @@ struct BlurSettings: Equatable, Codable {
         automaticStart = try values.decodeIfPresent(Bool.self, forKey: .automaticStart) ?? true
         nearClosedAngle = try values.decodeIfPresent(Double.self, forKey: .nearClosedAngle) ?? 30
         holdWhenStill = try values.decodeIfPresent(Bool.self, forKey: .holdWhenStill) ?? true
+        vacuumReveal = try values.decodeIfPresent(Bool.self, forKey: .vacuumReveal) ?? false
         validate()
     }
 
@@ -97,6 +99,7 @@ enum BlurMath {
 /// move that reference in hold mode; full reset is reserved for lifecycle changes.
 struct LidMotion {
     private(set) var openAngle: Double?
+    private var folding = false
     private var previousAngle: Double?
     private var lastMovement = 0.0
 
@@ -125,27 +128,35 @@ struct LidMotion {
         self.previousAngle = angle
         if !settings.holdWhenStill && time - lastMovement >= 0.5 {
             openAngle = angle
+            folding = false
             return 0
         }
         guard settings.automaticStart else { return BlurMath.progress(angle: angle, settings: settings) }
         let reference = openAngle ?? previousAngle
-        // Freeze the reference throughout a partial fold. At the return point,
-        // start a fresh cycle instead of retaining the session's highest angle.
-        // One degree of return tolerance accommodates the integer HID readings;
-        // it applies only while reopening, so the first closing degree still works.
-        if angle >= reference || (angle > previousAngle && angle >= reference - 1) {
-            openAngle = angle
+        // A three-degree closing threshold and one-degree clear threshold keep
+        // whole-degree sensor noise from repeatedly showing/capturing the desktop.
+        // Never move the reference within this band: doing so would turn noise
+        // into a new working angle and accumulate calibration drift.
+        if angle >= reference - 1 {
+            folding = false
+            if angle > reference + 3 { openAngle = angle }
             return 0
         }
+        if !folding {
+            guard angle <= reference - 3 else { return 0 }
+            folding = true
+        }
         let end = min(settings.nearClosedAngle, max(0, reference - 10))
-        // Half a degree suppresses the numerical boundary without waiting through
-        // a large fixed-angle dead zone. HID reports arrive in whole degrees.
-        let t = min(1, max(0, (reference - angle - 0.5) / max(0.5, reference - end - 0.5)))
+        let t = min(1, max(0, (reference - angle - 1) / max(1, reference - end - 1)))
         return t
     }
 }
 
 enum LidPreviewMath {
+    static func revealProgress(elapsed: Double) -> Double {
+        let t = BlurSettings.clamp(elapsed / 2.4, 0...1, fallback: 0)
+        return 1 - t * t * (3 - 2 * t)
+    }
     static func progress(angle: Double, reference: Double, settings: BlurSettings) -> Double {
         var previewSettings = settings
         previewSettings.enabled = true

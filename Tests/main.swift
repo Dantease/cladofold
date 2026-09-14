@@ -43,8 +43,8 @@ var adaptive = BlurSettings()
 adaptive.endAngle = 49.605 // Preserve old manual settings, but do not use them in automatic mode.
 var motion = LidMotion()
 check(motion.target(angle: 112, time: 0, settings: adaptive) == 0, "Initial working position is clear")
-let onset = motion.target(angle: 111, time: 1.0 / 30, settings: adaptive)
-check(onset > 0, "First degree of closing responds above the old 85-degree threshold")
+let onset = motion.target(angle: 109, time: 1.0 / 30, settings: adaptive)
+check(onset > 0, "Closing responds after the noise buffer above the old 85-degree threshold")
 check(BlurMath.follow(0, toward: onset, elapsed: 1.0 / 60, duration: 0.12) > 0, "Onset starts on the first animation tick")
 let held = motion.target(angle: 90, time: 0.5, settings: adaptive)
 check(motion.target(angle: 90, time: 60, settings: adaptive) == held, "Hold mode retains partial blur after a long stationary interval")
@@ -66,7 +66,7 @@ adaptive.holdWhenStill = false
 let moving = motion.target(angle: 95, time: 70.1, settings: adaptive)
 check(moving > 0 && motion.target(angle: 95, time: 70.4, settings: adaptive) == moving, "Settle mode does not clear while inside the settling interval")
 check(motion.target(angle: 95, time: 70.7, settings: adaptive) == 0, "Optional settle mode clears stationary blur")
-check(motion.target(angle: 94, time: 70.8, settings: adaptive) > 0, "Closing again starts from the settled position")
+check(motion.target(angle: 92, time: 70.8, settings: adaptive) > 0, "Closing again starts beyond the settled position's noise buffer")
 check(motion.target(angle: .nan, time: 71, settings: adaptive) == 0 && motion.openAngle == nil, "Invalid sensor data resets motion state")
 adaptive.automaticStart = false
 check(motion.target(angle: 60, time: 72, settings: adaptive) == BlurMath.progress(angle: 60, settings: adaptive), "Manual thresholds remain available")
@@ -109,7 +109,7 @@ _ = calibrated.target(angle: 118, time: 0, settings: cycleSettings)
 _ = calibrated.target(angle: 102, time: 1, settings: cycleSettings)
 calibrated.setOpenAngle(102, time: 2)
 check(calibrated.openAngle == 102 && calibrated.target(angle: 102, time: 2.1, settings: cycleSettings) == 0, "Follow my lid replaces an older wider reference with the current 102-degree angle")
-check(calibrated.target(angle: 101, time: 2.2, settings: cycleSettings) > 0, "Calibration retains first-degree closing onset")
+check(calibrated.target(angle: 101, time: 2.2, settings: cycleSettings) == 0, "Calibration ignores one-degree closing noise")
 let partial = calibrated.target(angle: 68, time: 3, settings: cycleSettings)
 check(calibrated.target(angle: 68, time: 100, settings: cycleSettings) == partial && calibrated.openAngle == 102, "A held partial fold does not move the calibrated reference")
 check(calibrated.target(angle: 90, time: 101, settings: cycleSettings) > 0 && calibrated.openAngle == 102, "Partial reopening keeps the same reference")
@@ -123,7 +123,7 @@ check(cyclesClear, "Repeated fold cycles do not accumulate a wider reopening thr
 calibrated.setOpenAngle(103, time: 200)
 _ = calibrated.target(angle: 60, time: 201, settings: cycleSettings)
 check(calibrated.target(angle: 101, time: 202, settings: cycleSettings) > 0, "Return tolerance does not prematurely clear a two-degree partial fold")
-check(calibrated.target(angle: 102, time: 203, settings: cycleSettings) == 0 && calibrated.openAngle == 102, "A one-degree sensor discrepancy clears and anchors the next cycle at the returned angle")
+check(calibrated.target(angle: 102, time: 203, settings: cycleSettings) == 0 && calibrated.openAngle == 103, "A one-degree sensor discrepancy clears without drifting the reference")
 _ = calibrated.target(angle: 60, time: 204, settings: cycleSettings)
 check(calibrated.target(angle: 30, time: 205, settings: cycleSettings) == 1, "Calibration preserves the 30-degree blackout")
 calibrated.setOpenAngle(.nan, time: 206)
@@ -139,3 +139,25 @@ check(LidPreviewMath.appearanceProgress(from: 0.4) == 0.4, "Appearance editing p
 previewOnly.automaticStart = false
 check(LidPreviewMath.progress(angle: 50, reference: 102, settings: previewOnly) == 0.5, "The independent preview respects manual angle thresholds")
 print("Passed \(count) total behavior checks including calibrated cycles and live appearance previews")
+
+var quiet = LidMotion()
+quiet.setOpenAngle(102, time: 0)
+let noise = [102.0, 101, 103, 100, 102, 104, 101, 102]
+let quietTargets = (0..<400).map { quiet.target(angle: noise[$0 % noise.count], time: Double($0) / 60, settings: cycleSettings) }
+check(quietTargets.allSatisfy { $0 == 0 } && quiet.openAngle == 102, "Long stationary jitter neither captures nor ratchets the calibrated angle")
+check(quiet.target(angle: 99, time: 7, settings: cycleSettings) > 0, "Three degrees of deliberate closing starts the effect")
+check(quiet.target(angle: 100, time: 7.1, settings: cycleSettings) > 0, "Reopening inside the hysteresis band retains a continuous partial fold")
+check(quiet.target(angle: 101, time: 7.2, settings: cycleSettings) == 0, "One degree below the calibrated angle clears the effect")
+let afterReturn = (0..<400).map { quiet.target(angle: noise[$0 % noise.count], time: 8 + Double($0) / 60, settings: cycleSettings) }
+check(afterReturn.allSatisfy { $0 == 0 } && quiet.openAngle == 102, "Post-reopening sensor jitter cannot re-show the overlay")
+check(quiet.target(angle: 99, time: 16, settings: cycleSettings) > 0, "The next real fold works after a noisy return")
+check(quiet.target(angle: 30, time: 17, settings: cycleSettings) == 1, "Hysteresis preserves full black at 30 degrees")
+check(quiet.target(angle: 108, time: 18, settings: cycleSettings) == 0 && quiet.openAngle == 108, "A deliberate wider working position can establish a new reference")
+check(!migrated.vacuumReveal, "Existing users retain their previous animation until opting into vacuum reveal")
+var vacuumSettings = cycleSettings
+vacuumSettings.vacuumReveal = true
+let vacuumRestored = try JSONDecoder().decode(BlurSettings.self, from: JSONEncoder().encode(vacuumSettings))
+check(vacuumRestored == vacuumSettings, "Vacuum reveal persists across app and pane reloads")
+let reveal = (0...180).map { LidPreviewMath.revealProgress(elapsed: Double($0) / 60) }
+check(reveal.first == 1 && reveal.last == 0 && zip(reveal, reveal.dropFirst()).allSatisfy { $0 >= $1 }, "The toggle demonstration opens monotonically from black to clear")
+print("Passed \(count) total behavior checks including open-position hysteresis and optional reveal")
