@@ -1,107 +1,45 @@
 # cladofold.
 
-A native MacBook utility that gradually blurs the built-in display as you close the lid, then brings it back into focus as you open it. Includes a menu-bar app and a real **cladofold.** pane in **System Settings**.
+<p align="center"><img src="Resources/Brand/cladofold-demo.gif" alt="Six-second cladofold demo: a MacBook opens from black to a clear display, then softly blurs and folds closed" width="760"><br><sub>six-second demo · plays automatically</sub></p>
 
-## Download and share
+**a softer close. a clearer open.** cladofold. adds a smooth, hinge-aware fold to your MacBook display as you close and reopen the lid.
 
-Run `./Scripts/package.sh --preview` to generate a universal DMG and ZIP in `dist/`. Give either complete file to another person. They drag **cladofold.** to Applications and open it; no developer tools are needed. The System Settings pane is carried inside the app and installed per user. Both `/Applications` and `~/Applications` are supported; settings controls remember the installed app's location.
+[![download](https://img.shields.io/github/v/release/Dantease/cladofold?include_prereleases&color=dfff48&label=download)](https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-25272b)](#compatibility)
+[![MIT](https://img.shields.io/badge/license-MIT-dfff48)](LICENSE)
 
-**The app name is exactly `cladofold.`**, lowercase with a trailing period. Its on-disk filename is consequently `cladofold..app`. Internal bundle identifiers retain the old name to preserve existing preferences through the upgrade.
+### [↓ download cladofold. for Mac](https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg)
 
-Current packages are **unnotarized previews**. This build machine has no Developer ID certificate, so recipients may need Apple's app-specific **Open Anyway** flow. See [recipient instructions](Distribution/READ-ME.txt) and the [compatibility report and notarization workflow](Distribution/COMPATIBILITY.md). Find [preview downloads](https://github.com/Dantease/cladofold/releases), or visit the [interactive website](https://cladofold.app/).
+[install](#install) · [compatibility](#compatibility) · [privacy](#privacy) · [support](#support) · [build](#build)
 
-## App icon
+cladofold. softens, darkens, and draws the desktop toward the hinge. It begins from your current lid position; hold a new closing angle for one second and that becomes your new clear position. Appearance and lid behavior are adjustable in the app or its System Settings pane.
 
-The **cf.** mark follows the CladoBook icon: lowercase cream lettering, an acid-lime green square period, and a near-black background. `Resources/Brand/cf-master.png` is the master; `Scripts/MakeIcon.swift` packages it into native macOS sizes with rounded corners and transparent outer margins. The app and preference pane use the same ICNS resource. The menu bar uses a small system-colored `cf.` label for legibility in light and dark appearances.
+## install
 
-## Use
+1. Download the DMG, open it, and drag **cladofold.** to Applications.
+2. Open the app and choose **Check Mac compatibility…**
+3. Allow **Screen & System Audio Recording**, then reopen the app if macOS asks.
 
-1. Open `~/Applications/cladofold..app`.
-2. At the top of the app (or **System Settings → cladofold.**), choose **Open Screen Recording…** and enable cladofold. in **Privacy & Security → Screen & System Audio Recording**. Complete the Mac's authentication prompt. If macOS asks you to quit and reopen the app, accept it.
-3. Return to cladofold. Its setup card separately checks the **lid sensor** and **screen access**. Wait for **Ready · follows your lid**; use **Check again** if access has just changed. Automatic capture checks require an allowed macOS preflight and stop after any failure, including across relaunches. A new grant or your explicit **Check again** action permits a retry. A connected sensor alone does not mean the desktop animation can run.
-4. Try **Preview on my screen**, then start with your lid at a comfortable working angle. Closing begins the effect from that position. Reopen to the starting angle to clear it.
+This is an unnotarized public preview. If macOS blocks the first launch, use **Open Anyway** in Privacy & Security. [Apple’s instructions](https://support.apple.com/102445).
 
-The top switch toggles the effect. **Duo fold animation** adds a hinge-anchored perspective shift, tapered black side borders that soften with the image, stronger darkening toward the outer edge, and a final fade to black. Opening reverses the same angle-driven transition. **Dark border** adjusts how far the borders reach inward; disable Duo mode to return to the original blur.
+## compatibility
 
-**Start when I begin closing** tracks your open position with a small noise buffer: closing starts 3° below it and reopening clears within 1°. Tiny sensor fluctuations do not change that reference or repeatedly restart the overlay. **Black at** sets the full-darkness endpoint (30° above fully closed by default in Duo mode). Early lid movement develops blur and borders while keeping the desktop bright; the final fade reaches black at the chosen angle. **Keep blur until I open the lid back up** holds the effect when you pause; turn it off to clear after half a second of stillness. Turn automatic start off to use the original manual angle thresholds. Existing saved angle preferences are preserved during upgrades.
+Requires macOS 14+, Apple silicon or Intel with Metal graphics, a built-in MacBook display, and a continuous lid-angle sensor. Sensor support is expected on 14/16-inch MacBook Pro and M2-or-newer MacBook Air models. [Compatibility details](Distribution/COMPATIBILITY.md).
 
-Adjust maximum blur, darkening, smoothing, and progressive blur from the hinge. Settings save immediately and synchronize between the app and the System Settings pane. **Duo** selects the new animation with a 48 pt blur and quicker response; **Subtle**, **Balanced**, and **Dreamy** change blur, darkening, and smoothing. Presets preserve your angle thresholds and login preference.
+## privacy
 
-**Vacuum reveal** is an optional switch, off by default. It draws the image toward the bottom hinge while closing and lets it emerge upward while reopening. Turning it on plays a short demonstration in the miniature without screen access or moving the physical lid. **Replay vacuum reveal** repeats it. The angle slider and Follow my lid use the same reveal renderer, and turning the switch off restores the original appearance.
+No accounts, advertising, or analytics. One temporary desktop frame stays in memory during the fold, is never saved or uploaded, and is discarded when the effect clears.
 
-The miniature preview works without screen permission, including when the desktop effect is off, and uses the same renderer on synthetic content. Drag its angle slider or enable **Follow my lid**. Selecting Follow uses your current lid angle as the clear position; use **Use current angle as open** if you change your working position. The reference stays fixed through a partial close and hold, then clears when you return to it.
+## support
 
-Blur strength, darkening, border depth, and appearance toggles update the miniature immediately. If it is fully clear or black, adjusting appearance shows a partly folded sample so the change is visible. Move the lid or choose **Return to lid** to resume following it. **Preview on my screen** runs a six-second closing/opening animation. **Control–Option–Command–B** immediately disables the effect. You can also disable it or quit from the cf. button in the menu bar. An orange menu-bar mark means the effect is not ready; open settings for the reason.
+[Email hello@cladoconsult.com](mailto:hello@cladoconsult.com) · [Report an issue](https://github.com/Dantease/cladofold/issues)
 
-**Launch at login** uses Apple's ServiceManagement API. Login-item approval, if required by macOS, is managed in **General → Login Items & Extensions**.
+## build
 
-## Requirements and behavior
-
-- macOS Sonoma 14.0 or later; universal arm64 + x86_64 app and settings pane.
-- A MacBook with a readable Apple lid-angle HID sensor. Expected on 14/16-inch MacBook Pros and M2-or-newer Airs; unavailable on M1 Air and 13-inch Pro models. Verified on this M5 Max MacBook Pro. Use **Check Mac compatibility…** and read the [model matrix](Distribution/COMPATIBILITY.md) for limitations.
-- Screen Recording permission for desktop blur. The app does not require Accessibility or Input Monitoring permission.
-- Only the built-in display is affected. A desktop frame is captured at the start of each effect and stays frozen during the fold; applications continue running underneath. Screen frames stay in RAM and GPU memory and are released when the effect clears. Nothing is saved or transmitted.
-- The app clears its overlay on sensor loss, display changes, sleep, session changes, and screen lock. macOS controls its lock screen; this app does not draw over it. Automatic mode takes a new open-position reference when the unlocked session resumes. It cannot animate a physical opening that happened while the Mac was asleep.
-- The overlay ignores mouse input and sits below the system menu bar. A closed lid still sleeps normally. The app does not change power behavior.
-
-## Build and install
-
-Requires Xcode or the Command Line Tools with the macOS SDK; no package downloads.
+Requires Xcode or the Command Line Tools. No packages are downloaded.
 
 ```sh
-./Scripts/test.sh
-./Scripts/build.sh
-./Scripts/install.sh
-open "$HOME/Applications/cladofold..app"
+./Scripts/test.sh && ./Scripts/build.sh
 ```
 
-Build artifacts are in `build/cladofold..app` and `build/cladofold..prefPane`. The app embeds its pane and installs it for the current user on launch. Installation is per-user in `~/Applications` and `~/Library/PreferencePanes`; no administrator account is required. Quit cladofold. before replacing an installed build. System Settings may need to be quit and reopened after updating its pane. Local builds are ad-hoc signed; after a rebuild macOS may require Screen Recording permission again.
-
-If macOS shows cladofold. enabled but capture is still denied after a rebuild, the permission entry may refer to an older signature. First quit and reopen the installed app. If still denied, in **Screen & System Audio Recording**, select **cladofold.**, remove just that entry with **−**, then use **+** to add the installed app again. Enable it and quit/reopen cladofold. when prompted. This refresh affects only cladofold. The app verifies a real transient ScreenCaptureKit capture before enabling the effect. CoreGraphics preflight controls whether an automatic check is safe to attempt; only **Check again** can explicitly probe capture when preflight remains false. A failed capture clears the overlay and surfaces recovery instructions instead of retrying indefinitely. Opening settings does not itself repeat a capture request. No check bypasses macOS permission enforcement.
-
-To check hardware without showing an overlay:
-
-```sh
-"$HOME/Applications/cladofold..app/Contents/MacOS/cladofold" --diagnose
-```
-
-Development sandboxes can block HID access even when the sensor is present. Run hardware diagnostics outside such a sandbox.
-
-Core Image rendering checks also need normal macOS graphics access. If a development sandbox returns empty rendering buffers, run `build/render-tests` outside that sandbox. The tests render only a generated stripe pattern, never your desktop.
-
-To remove cladofold., turn off Launch at login, quit it, then move `~/Applications/cladofold..app` and `~/Library/PreferencePanes/cladofold..prefPane` to Trash. You can remove its screen permission in Privacy & Security.
-
-## Implementation
-
-- SwiftUI provides shared controls hosted by both AppKit and `NSPreferencePane`.
-- CFPreferences plus distributed change notifications synchronize settings between processes.
-- IOKit HID feature report 1 supplies the angle on a serial background queue at 60 Hz. The built-in display's CADisplayLink interpolates whole-degree readings at up to 120 Hz; rendering stops when the effect is hidden or stationary. Opening and closing use the same smoothing response, with immediate clear and black endpoints.
-- ScreenCaptureKit captures a single Retina desktop frame per fold. Display metadata and reusable GPU resources are prepared ahead of time. A tiny transient permission-check frame is also captured when verifying access. Core Image projects it through a hinge-anchored perspective transform onto black, then applies variable-radius hinge blur and spatial shading. Black participates in the blur so margins feather naturally. Metal presents the result.
-- A generation guard invalidates asynchronous captures after disabling, sleep, or sensor loss. The six-second preview is bounded, and the keyboard shortcut is registered through Carbon without monitoring keystrokes.
-
-## Reference
-
-The animation approach was informed by [lqSky7/iphone-duo-macos-animation](https://github.com/lqSky7/iphone-duo-macos-animation), inspected at commit `7157979b46c1a46a02cdfb3fdf7d281405a18acf`, and the lid-sensor format documented by [samhenrigold/LidAngleSensor](https://github.com/samhenrigold/LidAngleSensor). cladofold. is a separate implementation; no source files, assets, private SkyLight code, updater, or build scripts were copied from those projects.
-
-Apple framework references: [Preference Panes](https://developer.apple.com/documentation/preferencepanes), [ScreenCaptureKit](https://developer.apple.com/documentation/screencapturekit), [Core Image](https://developer.apple.com/documentation/coreimage), and [ServiceManagement](https://developer.apple.com/documentation/servicemanagement).
-
-## Animation research and fidelity
-
-Version 1.1 was compared with the [MacBook demonstration](https://www.youtube.com/watch?v=zos2ZjvgEmc) and the opening/closing segment around 8:12 in [Marques Brownlee’s iPhone Duo hands-on](https://www.youtube.com/watch?v=Od6M0AXpcxQ&t=492s), alongside [Apple’s public product demonstration](https://www.apple.com/iphone-duo/) and the reference shader linked above. The key visual cues are projected content, soft black margins, increasing blur away from the hinge, and spatial darkening. The projection and shading parameters here are an independent visual approximation, not Apple’s private implementation. A MacBook has one display hinged along the bottom; the phone’s transfer between inner and outer displays cannot be reproduced literally on that hardware.
-
-## Website development
-
-```sh
-cd website
-npm ci
-npm test
-npm run dev
-```
-
-The site uses Three.js and the lid of a licensed articulated MacBook model. Its “Scroll to open” cue leads into a frosted display with soft dark borders. An upward finger gesture opens on a natural-scrolling trackpad or touchscreen; the reverse closes it back to black. Buttons, keyboard controls, reduced motion, and a WebGL fallback keep downloads accessible. See [website development notes](website/README.md).
-
-## Contributing and licenses
-
-The app and website source code are [MIT-licensed](LICENSE). Forks and contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Modified forks are asked to use their own name and icon so users can distinguish them from the official app. See [branding guidance](BRANDING.md).
-
-The website’s MacBook model is **CC BY 4.0**, credited to **jackbaeten**, and retains its own license. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). cladofold. is an independent project and is not affiliated with Apple.
+[MIT license](LICENSE) · [Contributing](CONTRIBUTING.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
