@@ -9,6 +9,7 @@ node_modules/
 !.env.example
 planning/
 CONTEXT.md
+HANDOFF.md
 *.pem
 *.p12
 *.mobileprovision

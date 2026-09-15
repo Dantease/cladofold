@@ -22,7 +22,7 @@ The development build labels the download as being prepared. Set `VITE_RELEASE_R
 The Pages environment permits deployment from the publishing branch, not release tags. After publishing a release without a website change, dispatch the workflow from that branch to refresh download availability:
 
 ```sh
-gh workflow run pages.yml --repo Dantease/cladofold --ref codex/initial-release
+gh workflow run pages.yml --repo Dantease/cladofold --ref main
 ```
 
 Website commits on the publishing branch already trigger this deployment. The workflow deliberately has no release-tag deployment trigger, so it respects the existing environment protection rules.

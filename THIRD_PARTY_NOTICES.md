@@ -16,7 +16,7 @@ Three.js, Vite, and [html-to-image](https://github.com/bubkoo/html-to-image) are
 
 ## Website wallpaper
 
-`website/public/wallpaper.jpg` is an original image generated for this project with OpenAI image generation. It depicts abstract pale blue, mint, and periwinkle glass forms, with no third-party product artwork. It is included under the project’s MIT license.
+`website/public/wallpaper.jpg` is original project artwork depicting abstract pale blue, mint, and periwinkle glass forms. It contains no third-party product artwork and is included under the project’s MIT license. Creation-tool credits are recorded in [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## Animation references
 

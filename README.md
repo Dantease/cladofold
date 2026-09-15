@@ -42,4 +42,4 @@ Requires Xcode or the Command Line Tools. No packages are downloaded.
 ./Scripts/test.sh && ./Scripts/build.sh
 ```
 
-[MIT license](LICENSE) · [Contributing](CONTRIBUTING.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+[MIT license](LICENSE) · [Attribution](ATTRIBUTION.md) · [Contributing](CONTRIBUTING.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
