@@ -25,7 +25,8 @@ export function setupFeaturePreviews(onChange) {
   function response() {
     const start = document.querySelector('#demo-start').checked;
     const hold = document.querySelector('#demo-hold').checked;
-    document.querySelector('#response-note').textContent = `${start ? 'Starts with your movement.' : 'Choose a starting angle in the app.'} ${hold ? 'Holds until you reopen.' : 'Clears after half a second of stillness.'}`;
+    const pause = hold ? (start ? 'A closing pause readjusts after one second.' : 'Holds until you reopen.') : 'Any pause readjusts after half a second.';
+    document.querySelector('#response-note').textContent = `${start ? 'Starts with your movement.' : 'Choose a starting angle in the app.'} ${pause}`;
     onChange();
   }
   document.querySelector('#demo-start').addEventListener('change', response);

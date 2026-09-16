@@ -5,6 +5,7 @@ import { createScene } from './scene.js';
 import { setupDownloads } from './download-flow.js';
 import { setupFeaturePreviews } from './feature-previews.js';
 import { createScrollEffects } from './scroll-effects.js';
+import { releaseURL } from './release.js';
 
 const stage = document.querySelector('#stage');
 const interior = document.querySelector('#inside');
@@ -26,8 +27,7 @@ let unavailable = false;
 const scrollEffects = createScrollEffects(interior, schedule);
 document.querySelector('#phone-note').hidden = !/iPhone|iPad|Android/i.test(navigator.userAgent);
 
-const release = 'https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg';
-setupDownloads(import.meta.env.VITE_RELEASE_READY === 'true', release);
+setupDownloads(releaseURL);
 
 function failScene() {
   unavailable = true;

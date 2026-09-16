@@ -4,11 +4,11 @@
 
 **a softer close. a clearer open.** cladofold. adds a smooth, hinge-aware fold to your MacBook display as you close and reopen the lid.
 
-[![download](https://img.shields.io/github/v/release/Dantease/cladofold?include_prereleases&color=dfff48&label=download)](https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg)
+[![download](https://img.shields.io/github/v/release/Dantease/cladofold?include_prereleases&color=dfff48&label=download)](https://github.com/Dantease/cladofold/releases/download/v1.3.1-preview/cladofold.-1.3.1-universal-notarized.dmg)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-25272b)](#compatibility)
 [![MIT](https://img.shields.io/badge/license-MIT-dfff48)](LICENSE)
 
-### [↓ download cladofold. for Mac](https://github.com/Dantease/cladofold/releases/download/v1.3.0-preview/cladofold.-1.3.0-universal-preview.dmg)
+### [↓ download cladofold. for Mac](https://github.com/Dantease/cladofold/releases/download/v1.3.1-preview/cladofold.-1.3.1-universal-notarized.dmg)
 
 [install](#install) · [compatibility](#compatibility) · [privacy](#privacy) · [support](#support) · [build](#build)
 
@@ -20,7 +20,7 @@ cladofold. softens, darkens, and draws the desktop toward the hinge. It begins f
 2. Open the app and choose **Check Mac compatibility…**
 3. Allow **Screen & System Audio Recording**, then reopen the app if macOS asks.
 
-This is an unnotarized public preview. If macOS blocks the first launch, use **Open Anyway** in Privacy & Security. [Apple’s instructions](https://support.apple.com/102445).
+Signed with Developer ID and notarized by Apple, so macOS asks once whether to open it, the same as any app downloaded from the web.
 
 ## compatibility
 

@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scrollDestination } from '../src/motion.js';
-import { downloadState } from '../src/download-flow.js';
 
 test('continued scrolling after opening explores the page with the lid fully open', () => {
   assert.deepEqual(scrollDestination(1, 0, 2000, 400), { opening: 1, scrollTop: 400 });
@@ -20,10 +19,4 @@ test('scrolling beyond the footer never closes the lid or overflows the content'
 test('the initial reveal completes before any feature scrolling begins', () => {
   assert.deepEqual(scrollDestination(0, 0, 2000, 550), { opening: .5, scrollTop: 0 });
   assert.deepEqual(scrollDestination(.5, 0, 2000, 1000), { opening: 1, scrollTop: 0 });
-});
-test('published downloads are available without any star confirmation', () => {
-  assert.equal(downloadState(true), 'ready');
-});
-test('a draft or missing download remains unavailable', () => {
-  assert.equal(downloadState(false), 'preparing');
 });

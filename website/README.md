@@ -17,7 +17,7 @@ Build output is `dist/`. Relative asset URLs support both a GitHub Pages project
 
 GitHub Pages deploys this directory through the repository's Actions workflow. Cloudflare manages DNS: the apex and `www` are DNS-only CNAME records targeting `dantease.github.io`; Cloudflare flattens the apex record. The repository's Pages custom domain is `cladofold.app`. GitHub provides the HTTPS certificate and redirects `www` to the apex. Actions deployments do not require a `CNAME` file in the build output.
 
-The development build labels the download as being prepared. Set `VITE_RELEASE_READY=true` only when the pinned release asset in `src/main.js` exists. The Pages workflow verifies that asset before enabling the production link.
+Every download control points directly to the pinned release DMG, including in the source HTML when JavaScript is unavailable. The Pages workflow verifies that asset before it builds, and fails the deployment if the download stops resolving.
 
 The Pages environment permits deployment from the publishing branch, not release tags. After publishing a release without a website change, dispatch the workflow from that branch to refresh download availability:
 
@@ -40,12 +40,16 @@ Website commits on the publishing branch already trigger this deployment. The wo
 - The open display has scroll-driven depth: a slower hero wallpaper, small opposing offsets for feature copy and settings panels, and a soft glass reflection rendered by the existing WebGL display material. Reflections follow page position, with no timer or idle animation. Phone movement is halved; Reduce Motion disables both parallax and the WebGL reflection.
 - While open, arrow keys, Page Up/Down, and Space browse the content; Home and End go to its top and footer.
 
-The headline pairs the system sans-serif with a Georgia italic second line. The site loads no analytics, custom fonts, or third-party scripts. GitHub hosts the app downloads. The display snapshot captures only this site’s content; it does not request screen access. Browser events redraw the scene only while it changes; device pixel ratio is capped at 1.5.
+The entire interface renders in lowercase. The two-line display titles pair Times New Roman Condensed on the first line with DaVinci Italic on the yellow-green second line. A small additional slant gives the accent line an almost-cursive shape while keeping its spacing legible. Both use explicit local font stacks with system fallbacks, so the site loads no custom font files or font-service requests. The site loads no analytics or third-party scripts. GitHub hosts the app downloads. The display snapshot captures only this site’s content; it does not request screen access. Browser events redraw the scene only while it changes; device pixel ratio is capped at 1.5.
+
+The primary hero and footer download buttons use compact padding and a 12 px label-to-arrow gap. Hovering lifts them into a subtle continuous float with a soft shadow; Reduce Motion removes the animation.
+
+The footer links to lightweight `privacy.html`, `terms.html`, and `support.html` pages copied from `public/`. Privacy and terms describe only the site's and app's verified behavior. Support asks for name, email, and message, then opens a percent-encoded draft to `hello@cladoconsult.com`; it has no form backend and stores nothing. Keep the visible direct-email fallback because `mailto:` needs a configured email application.
+
+The MacBook's display-bezel mesh uses a solid black unlit material so the top-center camera island and surrounding bezel match the screen at every fold angle.
 
 The model is CC BY 4.0. Preserve visible credit and `public/MODEL-LICENSE.txt` when sharing it. JavaScript source is MIT-licensed.
 
 ## Optional star prompt
 
 Available releases download immediately through a normal file link. A small, dismissible prompt then invites visitors to star the repository; it never blocks the download or moves keyboard focus. The prompt appears once per page visit. The header also has a quiet GitHub star link. Starring is entirely optional, and the site collects no GitHub username, token, or account data.
-
-If the release is unavailable, a short dialog explains that the preview is being prepared and links to the releases page. It does not claim a download started or ask for a star. The release-ready flag remains controlled by the Pages build’s artifact check.

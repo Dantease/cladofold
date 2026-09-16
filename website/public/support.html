@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#08121f" />
+    <meta name="description" content="Send feedback or ask for help with cladofold." />
+    <title>support — cladofold.</title>
+    <link rel="icon" type="image/png" href="./icon.png" />
+    <link rel="canonical" href="https://cladofold.app/support.html" />
+    <link rel="stylesheet" href="./legal.css" />
+  </head>
+  <body>
+    <div class="page">
+      <nav class="nav" aria-label="Page"><a class="brand" href="./">cladofold<span>.</span></a><a class="back" href="./">Back to home</a></nav>
+      <main>
+        <p class="eyebrow">feedback &amp; support</p>
+        <h1>tell us what you think.</h1>
+        <p class="intro">Questions, ideas, and rough edges are welcome. Share the details below and your email app will prepare a message.</p>
+        <form id="support-form" action="mailto:hello@cladoconsult.com" method="post" enctype="text/plain">
+          <label for="support-name">Name<input id="support-name" name="name" type="text" autocomplete="name" required maxlength="80" /></label>
+          <label for="support-email">Email<input id="support-email" name="email" type="email" autocomplete="email" required maxlength="254" /></label>
+          <label for="support-message">Message<textarea id="support-message" name="message" required maxlength="2000" rows="8" aria-describedby="support-note"></textarea></label>
+          <p class="form-note" id="support-note">Nothing is sent from this page. Review the draft, then choose Send in your email app. Or email <a href="mailto:hello@cladoconsult.com">hello@cladoconsult.com</a> directly.</p>
+          <button class="submit" type="submit">Open email draft</button>
+          <p id="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </main>
+      <footer class="legal-footer"><span>cladofold. © 2026</span><div><a href="./privacy.html">Privacy</a><a href="./terms.html">Terms</a><a href="./support.html" aria-current="page">Support</a></div></footer>
+    </div>
+    <script type="module" src="./support.js"></script>
+  </body>
+</html>

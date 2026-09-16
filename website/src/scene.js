@@ -133,6 +133,8 @@ export function createScene(container, interior, onReady, onFailure) {
     model.scale.setScalar(modelScale);model.position.set(0,0.04-0.00764*modelScale,-0.4+12.42971*modelScale);
     lid=model.getObjectByName('CladofoldLid');screen=model.getObjectByName('CladofoldScreen');
     if(!lid || !screen)throw new Error('The lid model is incomplete.');
+    const displayBezel=lid.getObjectByName('Object_10_lid');
+    if(displayBezel)displayBezel.material=new THREE.MeshBasicMaterial({color:0x000000,toneMapped:false});
     model.getObjectByName('Base').visible=false;
     model.traverse(object=>{if(object.isMesh && object.material?.metalness!==undefined)object.material.envMapIntensity=0.5;});
     screen.material=fold.material;world.add(model);world.updateMatrixWorld(true);

@@ -1,1 +1,5 @@
-/* System fonts keep the page fast and avoid sending visitor requests to a font service. */
+/* Prefer locally installed display faces and fall back without making font-service requests. */
+:root {
+  --display-serif: "Times New Roman Condensed", "Times New Roman", Times, serif;
+  --display-accent: "TRJNDaVinciItalic-Display", "TRJNDaVinci", "DaVinci", "Iowan Old Style", Baskerville, Georgia, "Times New Roman", Times, serif;
+}
