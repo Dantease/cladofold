@@ -32,7 +32,10 @@ import QuartzCore
     private var errorMessage: String?
     private var suspended = false
     private var locked = false
-    private var progress = 0.0
+    private var presentation = FoldPresentation()
+    private var progress: Double { presentation.progress }
+    private var entryOpacity: Double { presentation.entryOpacity }
+    private var lastEntryOpacity = -1.0
     private var lastRender = -1.0
     private var lastTick = CACurrentMediaTime()
     private var previewStart: Date?
@@ -41,6 +44,7 @@ import QuartzCore
     private var shortcutAvailable = true
     private var motion = LidMotion()
     private var motionSettings = BlurSettings()
+    private var lidTracker = LidAngleTracker()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard NSRunningApplication.runningApplications(withBundleIdentifier: CladofoldID.app).count <= 1 else {
@@ -57,7 +61,11 @@ import QuartzCore
             guard let self else { return }
             self.angle = angle
             self.sensorMessage = message
-            if angle != nil { self.sampleTime = Date() }
+            if let angle {
+                let now = Date()
+                self.sampleTime = now
+                self.lidTracker.sample(angle, time: now.timeIntervalSinceReferenceDate)
+            }
             // A sensor change wakes rendering. Intermediate frames then follow
             // the built-in display's clock, independently of the HID cadence.
             if self.animationDisplayLink?.isPaused != false { self.tick() }
@@ -163,6 +171,7 @@ import QuartzCore
             return
         }
         let target: Double
+        var liveAngle: Double?
         if let previewStart {
             let seconds = now.timeIntervalSince(previewStart)
             if seconds >= 6 { clear(); return }
@@ -170,12 +179,17 @@ import QuartzCore
             let linear = seconds < 2 ? seconds / 2 : (seconds < 3 ? 1 : max(0, (5 - seconds) / 2))
             target = linear * linear * (3 - 2 * linear)
         } else if let angle, now.timeIntervalSince(sampleTime) < 0.6 {
-            target = motion.target(angle: angle, time: now.timeIntervalSinceReferenceDate, settings: preferences.settings)
+            let referenceTime = now.timeIntervalSinceReferenceDate
+            liveAngle = lidTracker.estimated(now: referenceTime)
+            target = motion.target(angle: liveAngle ?? angle, time: referenceTime, settings: preferences.settings)
         } else {
             clear(); return
         }
-        progress = BlurMath.follow(progress, toward: target, elapsed: elapsed, duration: preferences.settings.smoothing)
-        if progress < 0.0005 && target == 0 {
+        // Do not accumulate invisible fold progress while the first desktop
+        // snapshot is loading. Once ready, enter from clear toward the latest
+        // lid target and blend the overlay in on the same response curve.
+        presentation.update(target: target, elapsed: elapsed, snapshotReady: overlay.ready, duration: preferences.settings.smoothing)
+        if progress == 0 && target == 0 {
             if overlay.ready || overlay.capturing { clearOverlay() }
             setAnimationActive(previewStart != nil)
             return
@@ -192,6 +206,8 @@ import QuartzCore
                     self.captureRetryAfter = .distantPast
                     self.errorMessage = nil
                     self.lastRender = -1
+                    self.lastEntryOpacity = -1
+                    self.lastTick = CACurrentMediaTime()
                 } catch {
                     guard self.captureGeneration == generation, !Task.isCancelled else { return }
                     self.captureAccess.fail(error)
@@ -202,11 +218,17 @@ import QuartzCore
                 }
             }
         }
-        if overlay.ready && abs(progress - lastRender) > 0.000005 {
-            overlay.render(progress: progress, settings: preferences.settings)
+        if overlay.ready && (abs(progress - lastRender) > 0.000005 || entryOpacity != lastEntryOpacity) {
+            overlay.render(progress: progress, settings: preferences.settings, entryOpacity: entryOpacity)
             lastRender = progress
+            lastEntryOpacity = entryOpacity
         }
-        if previewStart == nil && progress == target && overlay.ready { setAnimationActive(false) }
+        // Keep the display clock running while the live angle is still gliding
+        // between whole-degree HID reports.
+        if previewStart == nil && progress == target && entryOpacity == 1 && overlay.ready,
+           !lidTracker.isExtrapolating(now: now.timeIntervalSinceReferenceDate) {
+            setAnimationActive(false)
+        }
     }
 
     private func clearOverlay() {
@@ -215,13 +237,15 @@ import QuartzCore
         captureTask?.cancel()
         captureTask = nil
         overlay.clear()
-        progress = 0
+        presentation = FoldPresentation()
+        lastEntryOpacity = -1
         lastRender = -1
     }
 
     private func clear() {
         previewStart = nil
         motion.reset()
+        lidTracker.reset()
         clearOverlay()
     }
 
@@ -402,12 +426,10 @@ import QuartzCore
 
     @objc private func requestPermission() {
         clear()
-        // Opening settings must not start another capture request. Register the
-        // app once, on the person's first explicit setup action only.
-        if !UserDefaults.standard.bool(forKey: "screenPermissionWasRequested") {
-            UserDefaults.standard.set(true, forKey: "screenPermissionWasRequested")
-            if !CGPreflightScreenCaptureAccess() { _ = CGRequestScreenCaptureAccess() }
-        }
+        // Ask on every explicit setup action. The current signed executable,
+        // rather than a remembered request from an older build, is the TCC
+        // client macOS needs to authorize.
+        if !CGPreflightScreenCaptureAccess() { _ = CGRequestScreenCaptureAccess() }
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
             NSWorkspace.shared.open(url)
         }

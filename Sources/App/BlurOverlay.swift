@@ -80,12 +80,13 @@ enum OverlayError: LocalizedError {
         ready = true
     }
 
-    func render(progress: Double, settings: BlurSettings) {
+    func render(progress: Double, settings: BlurSettings, entryOpacity: Double = 1) {
         guard ready, let panel, let surface else { return }
         surface.progress = progress
         surface.settings = settings
-        // Keep only a tiny onset blend; the former 4% ramp hid early lid motion.
-        panel.alphaValue = min(1, progress / 0.005)
+        // Keep the tiny onset blend while also fading in the first captured
+        // frame, so a slow screenshot cannot make a developed fold pop in.
+        panel.alphaValue = entryOpacity * min(1, progress / 0.005)
         if !panel.isVisible { panel.orderFrontRegardless() }
         surface.draw()
     }

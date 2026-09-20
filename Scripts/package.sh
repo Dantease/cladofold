@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 MODE="${1:---preview}"
 case "$MODE" in
-  --preview) unset CODE_SIGN_IDENTITY; CHANNEL='preview' ;;
+  --preview) export CODE_SIGN_IDENTITY='-'; CHANNEL='preview' ;;
   --notarize)
     : "${CODE_SIGN_IDENTITY:?Set a Developer ID Application identity}"
     : "${NOTARY_PROFILE:?Set the name of an existing notarytool keychain profile}"

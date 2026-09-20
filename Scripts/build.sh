@@ -3,7 +3,26 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP='build/cladofold..app'
 PANE='build/cladofold..prefPane'
-IDENTITY="${CODE_SIGN_IDENTITY:--}"
+if [ "${CODE_SIGN_IDENTITY+x}" = x ]; then
+    IDENTITY="${CODE_SIGN_IDENTITY:--}"
+else
+    # TCC associates Screen Recording access with the app's signing
+    # requirement. Prefer the stable distribution identity when it is
+    # available so local rebuilds do not leave an enabled-but-obsolete entry
+    # in System Settings. CI and contributors without a certificate still get
+    # an ad-hoc build.
+    AVAILABLE_IDENTITIES=$(security find-identity -v -p codesigning 2>/dev/null || true)
+    IDENTITY=$(printf '%s\n' "$AVAILABLE_IDENTITIES" |
+        sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' | sed -n '1p')
+    if [ -z "$IDENTITY" ]; then
+        IDENTITY=$(printf '%s\n' "$AVAILABLE_IDENTITIES" |
+            sed -n 's/.*"\(Apple Development:.*\)"/\1/p' | sed -n '1p')
+    fi
+    if [ -z "$IDENTITY" ]; then
+        IDENTITY='-'
+        echo 'warning: no stable signing identity found; Screen Recording permission may need to be granted again after a rebuild' >&2
+    fi
+fi
 mkdir -p build/ModuleCache build/architectures "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/PlugIns" "$PANE/Contents/MacOS" "$PANE/Contents/Resources"
 # Compile both slices, regardless of the build machine's processor.
 for ARCH in arm64 x86_64; do
@@ -28,6 +47,11 @@ rm -rf "$APP/Contents/PlugIns/cladofold..prefPane"
 ditto "$PANE" "$APP/Contents/PlugIns/cladofold..prefPane"
 codesign "${SIGN_FLAGS[@]}" "$APP"
 codesign --verify --deep --strict "$APP"
+if [ "$IDENTITY" = '-' ]; then
+    echo 'Code signing: ad-hoc'
+else
+    echo "Code signing: $IDENTITY"
+fi
 lipo "$APP/Contents/MacOS/cladofold" -verify_arch arm64 x86_64
 lipo "$PANE/Contents/MacOS/CladofoldPane" -verify_arch arm64 x86_64
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")
