@@ -43,6 +43,7 @@ struct SettingsGlass: ViewModifier {
     @Environment(\.colorSchemeContrast) private var contrast
 
     @ViewBuilder func body(content: Content) -> some View {
+#if compiler(>=6.2)
         if reduceTransparency || contrast == .increased {
             content
                 .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: cornerRadius))
@@ -54,6 +55,17 @@ struct SettingsGlass: ViewModifier {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
                 .overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(.primary.opacity(0.1)))
         }
+#else
+        if reduceTransparency || contrast == .increased {
+            content
+                .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(.primary.opacity(0.35)))
+        } else {
+            content
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay(RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(.primary.opacity(0.1)))
+        }
+#endif
     }
 }
 
