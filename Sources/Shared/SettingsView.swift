@@ -88,11 +88,15 @@ struct SettingsView: View {
 
 
     @ViewBuilder private var settingsSurface: some View {
+#if compiler(>=6.2)
         if #available(macOS 26.0, *) {
             GlassEffectContainer(spacing: 18) { settingsLayout }
         } else {
             settingsLayout
         }
+#else
+        settingsLayout
+#endif
     }
 
     private var settingsLayout: some View {
