@@ -1,10 +1,29 @@
-# Validation — 1.3.1 preview candidate
+# Validation — 1.3.2 preview candidate
 
 Build host: Apple silicon MacBook Pro (M5 Max), macOS 26.6.2, Apple Swift 6.3.3.
 
+## October 10, 2026 — ECC closing-stutter audit (local candidate)
+
+ECC Performance Optimizer, Swift Reviewer, and Code Reviewer independently reviewed the native sensor, motion, capture, rendering, and lifecycle paths. Existing uncommitted appearance/control and build-number changes were preserved. The corrected 1.3.1 build 34 was subsequently installed with a backup of the previous app. A normal relaunch retained Screen Recording access and reported “Ready · follows your lid.” Version 1.3.2 build 35 packages those fixes for distribution.
+
+Six corrections address concrete timing/state failures:
+
+- Fractional display-clock movement now accumulates against the last accepted movement sample. Previously, slow continuous closing at 60/120 Hz could be mistaken for a stationary hold, clearing and recalibrating mid-fold. The new integrated sensor-tracker/motion/presentation regression fails with the old comparison and passes with the fix.
+- Manual thresholds with Hold partial folds disabled now stay clear after a hold until movement resumes, instead of reapplying blur on the next frame and pulsing every half second.
+- Canceling a screenshot no longer leaves a three-second capture cooldown. Generation checks reject stale completions, a pending-task guard prevents duplicate launches, and actual failures retain the existing capture-access failure latch.
+- Sensor delivery retains only the newest pending sample and its acquisition timestamp. A blocked main queue no longer replays stale readings with newly assigned timestamps; stop/restart invalidates old deliveries.
+- Presentation uses actual elapsed frame time rather than truncating every delay to 1/30 second and stretching the response after stalls.
+- A frame is acknowledged only when a Metal command is submitted. Drawable acquisition failure leaves the frame dirty and the display clock awake for retry.
+
+`./Scripts/test.sh` passes 338 checks: 247 behavior, 25 capture-access, 16 sensor-delivery, 45 synthetic rendering, and 5 installation checks. `./Scripts/build.sh` builds arm64/x86_64 app and settings-pane slices and passes strict signature verification using the available Developer ID. The final independent integration review found no further high-confidence regressions.
+
+`./Scripts/benchmark-renderer.sh` now measures synthetic screenshot-like pixels at the built-in display's 3456×2234 resolution, with cold timing and 100 warm samples per radius/progress case. In a controlled run, CPU submission p95 at 36-point blur was 12.51/10.60/6.57 ms at 10/50/90% progress. This exceeds the 8.33 ms budget for some 120 Hz frames. The experimental `--texture-source` comparison reduced early/middle CPU p95 to 6.51/5.48 ms, with 19.38 ms one-time preparation, but late-fold tails were inconsistent. It remains benchmark-only pending image/color and capture-lifecycle validation. No production filter or frame-admission changes were made.
+
+Limitations: the running installed build's retained telemetry showed a 243 ms maximum frame interval; that historical window does not identify the cause of the reported incident. The benchmark excludes drawable acquisition and actual presentation. Physical slow-close/hold/reopen, sleep/lock, and the installed user's exact freezing sequence have not been replayed with this candidate. No synchronous quit deadlock was found in the reviewed lifecycle code. Source and synthetic-test results do not establish end-to-end smoothness on this or other Macs.
+
 ## Build 13 — open-angle buffer and optional vacuum reveal
 
-This is the current installed candidate. The numbered build sections below remain historical records.
+The numbered build sections below remain historical records and do not describe the current candidate.
 
 - 149 local checks pass: 74 motion/preferences/demo behavior checks, 25 capture-recovery checks, 45 synthetic Core Image rendering checks, and 5 installer checks. The universal arm64/x86_64 app and settings pane both compile and pass strict signature verification.
 - The new 3° closing / 1° clearing hysteresis keeps the calibrated reference fixed across small sensor fluctuations. Two 400-reading jitter sequences, before and after a fold, remain clear without reference drift. A deliberate fold still starts, a partial held fold remains visible, and full darkness remains at 30°. This intentionally supersedes build 11's first-degree onset and build 12's reference changes inside the one-degree return band.

@@ -50,8 +50,9 @@ enum OverlayError: LocalizedError {
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
-        // The system menu remains above the overlay, so the off switch stays usable.
-        panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue - 1)
+        // Cover the menu bar so it folds with the desktop. Clicks still pass
+        // through; ⌃⌥⌘B disables the effect if the menus are covered.
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.isReleasedWhenClosed = false
         self.panel = panel
@@ -80,15 +81,16 @@ enum OverlayError: LocalizedError {
         ready = true
     }
 
-    func render(progress: Double, settings: BlurSettings, entryOpacity: Double = 1) {
-        guard ready, let panel, let surface else { return }
+    @discardableResult
+    func render(progress: Double, settings: BlurSettings, entryOpacity: Double = 1) -> Bool {
+        guard ready, let panel, let surface else { return false }
         surface.progress = progress
         surface.settings = settings
         // Keep the tiny onset blend while also fading in the first captured
         // frame, so a slow screenshot cannot make a developed fold pop in.
         panel.alphaValue = entryOpacity * min(1, progress / 0.005)
         if !panel.isVisible { panel.orderFrontRegardless() }
-        surface.draw()
+        return surface.submitFrame()
     }
 
     func clear(discardResources: Bool = false) {
@@ -117,6 +119,7 @@ enum OverlayError: LocalizedError {
     private(set) var renderError: String?
     var pointsToPixels = 2.0
     private var frameGeneration = 0
+    private var submittedFrames: UInt64 = 0
     private let context: CIContext
     private let commands: MTLCommandQueue
     private let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
@@ -144,6 +147,14 @@ enum OverlayError: LocalizedError {
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 
+    /// Drawable acquisition can fail during display transitions. The caller
+    /// must retain its dirty frame until a command is actually submitted.
+    func submitFrame() -> Bool {
+        let previous = submittedFrames
+        draw()
+        return submittedFrames != previous
+    }
+
     func draw(in view: MTKView) {
         guard let snapshot, let drawable = currentDrawable, let command = commands.makeCommandBuffer() else { return }
         var output = BlurFilter.fold(image: snapshot, progress: progress, settings: settings, pixelsPerPoint: pointsToPixels)
@@ -160,5 +171,6 @@ enum OverlayError: LocalizedError {
             }
         }
         command.commit()
+        submittedFrames &+= 1
     }
 }

@@ -1,6 +1,6 @@
 # cladofold. compatibility
 
-Version 1.3.0 preview. Hardware research: September 12, 2026.
+Version 1.3.2 preview. Hardware research: September 12, 2026.
 
 The universal download contains **arm64 and x86_64** executables for both the app and the System Settings pane. Minimum deployment target is **macOS Sonoma 14.0**. A successful cross-compilation is not a substitute for testing on each processor and OS version.
 
@@ -38,11 +38,11 @@ The app detects the actual sensor; it does not restrict access based on a model 
 
 ## Distribution status
 
-The current downloadable DMG and ZIP are **ad-hoc-signed, unnotarized previews**. Apple may block opening them by default. Recipients can follow Apple's [app-specific Open Anyway instructions](https://support.apple.com/102445) if they trust the source and their Mac permits it. No Gatekeeper bypass scripts or quarantine-stripping instructions are included.
+The release DMG and ZIP contain a **Developer ID-signed, Apple-notarized app**. The DMG is also signed and notarized. The preview label describes the release channel; it does not mean these downloads are unsigned or unnotarized. macOS may ask whether to open the downloaded app on first launch.
 
-An ad-hoc signature identifies only the exact program being signed, without a developer certificate ([Apple's code-signing guide](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html)). Rebuilt previews can therefore require a fresh Screen Recording permission entry. The app stops automatic checks after a failure so activation and wake cannot keep triggering requests. Stable Developer ID signing across releases and a real upgrade/permission-retention test are still needed before presenting updates as seamless. Notarization does not remove the user's initial Screen Recording consent or macOS-controlled reminders.
+Notarization does not remove the user's initial Screen Recording consent or macOS-controlled reminders. The app stops automatic checks after a failure so activation and wake cannot keep triggering requests. An upgrade from an older ad-hoc build may require refreshing its Screen Recording entry. Permission retention across upgrades still needs real-device testing before updates can be described as seamless.
 
-For a normal notarized release, install a Developer ID Application certificate and configure a `notarytool` Keychain profile. Run:
+For maintainers packaging a notarized release, use a Developer ID Application certificate and an existing `notarytool` Keychain profile:
 
 ```sh
 CODE_SIGN_IDENTITY='Developer ID Application: Your Name (TEAMID)' \
@@ -50,4 +50,6 @@ NOTARY_PROFILE='your-existing-keychain-profile' \
 ./Scripts/package.sh --notarize
 ```
 
-This signs nested code before the app with hardened runtime and a secure timestamp, submits the app to Apple, staples and checks its ticket, then notarizes and staples the DMG. Credentials remain in the Keychain. No certificate, private key, token, or profile is included in a download. The notarization path is prepared but has not been executed because no Developer ID identity is available on the build Mac.
+This signs nested code before the app with hardened runtime and a secure timestamp, submits the app to Apple, staples and checks its ticket, then notarizes and staples the DMG. Credentials remain in the Keychain. No private key, token, or Keychain profile is included in a download.
+
+`./Scripts/package.sh --preview` instead makes an ad-hoc-signed, unnotarized package for local testing. Its included installation guide explains that distinct signing status. It is not the notarized package linked by the public download controls.

@@ -39,7 +39,6 @@ import QuartzCore
     private var lastRender = -1.0
     private var lastTick = CACurrentMediaTime()
     private var previewStart: Date?
-    private var captureRetryAfter = Date.distantPast
     private var loginState: Bool?
     private var shortcutAvailable = true
     private var motion = LidMotion()
@@ -57,14 +56,13 @@ import QuartzCore
         setupMenu()
         setupShortcut()
         setupObservers()
-        sensor.onSample = { [weak self] angle, message in
+        sensor.onSample = { [weak self] angle, message, timestamp in
             guard let self else { return }
             self.angle = angle
             self.sensorMessage = message
             if let angle {
-                let now = Date()
-                self.sampleTime = now
-                self.lidTracker.sample(angle, time: now.timeIntervalSinceReferenceDate)
+                self.sampleTime = Date(timeIntervalSinceReferenceDate: timestamp)
+                self.lidTracker.sample(angle, time: timestamp)
             }
             // A sensor change wakes rendering. Intermediate frames then follow
             // the built-in display's clock, independently of the HID cadence.
@@ -163,7 +161,9 @@ import QuartzCore
     private func tick() {
         let now = Date()
         let tickTime = CACurrentMediaTime()
-        let elapsed = min(1.0 / 30, max(0, tickTime - lastTick))
+        // Follow wall-clock time after a missed frame rather than stretching
+        // the response further each time the renderer stalls.
+        let elapsed = max(0, tickTime - lastTick)
         lastTick = tickTime
         guard (preferences.settings.enabled || previewStart != nil), permission, !suspended, !locked else {
             if progress != 0 || overlay.capturing || overlay.ready { clear() }
@@ -195,15 +195,16 @@ import QuartzCore
             return
         }
         setAnimationActive(true)
-        if !overlay.ready && !overlay.capturing && now > captureRetryAfter {
-            captureRetryAfter = now.addingTimeInterval(3)
+        // A canceled capture can restart immediately. Actual capture failures
+        // already stop retries through CaptureAccess's failure latch.
+        if !overlay.ready && !overlay.capturing && captureTask == nil {
             let generation = captureGeneration
             captureTask = Task { [weak self] in
                 guard let self else { return }
                 do {
                     try await self.overlay.capture()
                     guard self.captureGeneration == generation, !Task.isCancelled else { return }
-                    self.captureRetryAfter = .distantPast
+                    self.captureTask = nil
                     self.errorMessage = nil
                     self.lastRender = -1
                     self.lastEntryOpacity = -1
@@ -218,17 +219,21 @@ import QuartzCore
                 }
             }
         }
-        if overlay.ready && (abs(progress - lastRender) > 0.000005 || entryOpacity != lastEntryOpacity) {
-            overlay.render(progress: progress, settings: preferences.settings, entryOpacity: entryOpacity)
+        if overlay.ready && needsRender,
+           overlay.render(progress: progress, settings: preferences.settings, entryOpacity: entryOpacity) {
             lastRender = progress
             lastEntryOpacity = entryOpacity
         }
         // Keep the display clock running while the live angle is still gliding
         // between whole-degree HID reports.
-        if previewStart == nil && progress == target && entryOpacity == 1 && overlay.ready,
+        if previewStart == nil && progress == target && entryOpacity == 1 && overlay.ready && !needsRender,
            !lidTracker.isExtrapolating(now: now.timeIntervalSinceReferenceDate) {
             setAnimationActive(false)
         }
+    }
+
+    private var needsRender: Bool {
+        abs(progress - lastRender) > 0.000005 || entryOpacity != lastEntryOpacity
     }
 
     private func clearOverlay() {
@@ -367,7 +372,6 @@ import QuartzCore
         previewStart = Date()
         frameIntervals.removeAll(keepingCapacity: true)
         setAnimationActive(true)
-        captureRetryAfter = .distantPast
     }
 
     @objc private func useCurrentOpenAngle() {

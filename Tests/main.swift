@@ -20,6 +20,13 @@ check(BlurMath.progress(angle: 0, settings: settings) == 0, "Disable always clea
 settings.startAngle = .nan; settings.endAngle = 999; settings.radius = -20; settings.smoothing = .infinity
 settings.validate()
 check(settings.startAngle == 85 && settings.endAngle == 75 && settings.radius == 0 && settings.smoothing == 0.378, "Corrupt preferences are sanitized")
+var blackAt = BlurSettings()
+blackAt.nearClosedAngle = 60
+blackAt.validate()
+check(blackAt.nearClosedAngle == 60, "Black at can finish at 60 degrees")
+blackAt.nearClosedAngle = 75
+blackAt.validate()
+check(blackAt.nearClosedAngle == 60, "Black at cannot go past 60 degrees")
 check(BlurMath.decodeLidReport([1, 106, 0]) == 106, "Real HID angle format")
 check(BlurMath.decodeLidReport([1, 0, 1]) == nil, "Impossible angle rejected")
 check(BlurMath.decodeLidReport([2, 106, 0]) == nil, "Wrong report rejected")
@@ -73,6 +80,29 @@ check(motion.target(angle: 88, time: 70.8, settings: adaptive) > 0, "Closing aga
 check(motion.target(angle: .nan, time: 71, settings: adaptive) == 0 && motion.openAngle == nil, "Invalid sensor data resets motion state")
 adaptive.automaticStart = false
 check(motion.target(angle: 60, time: 72, settings: adaptive) == BlurMath.progress(angle: 60, settings: adaptive), "Manual thresholds remain available")
+var manualSettleSettings = BlurSettings()
+manualSettleSettings.automaticStart = false
+manualSettleSettings.holdWhenStill = false
+var manualSettleMotion = LidMotion()
+manualSettleMotion.setOpenAngle(110, time: 0)
+check(manualSettleMotion.target(angle: 60, time: 0.1, settings: manualSettleSettings) > 0,
+      "Manual thresholds activate while moving with partial-fold holding disabled")
+var manualPresentation = FoldPresentation()
+var remainedClear = true
+for frame in 1...360 {
+    let time = 0.1 + Double(frame) / 120
+    let target = manualSettleMotion.target(angle: 60, time: time, settings: manualSettleSettings)
+    if time >= 0.6 { remainedClear = remainedClear && target == 0 }
+    manualPresentation.update(target: target, elapsed: 1 / 120, snapshotReady: true)
+}
+check(remainedClear && manualPresentation.progress == 0,
+      "A held manual fold fades fully clear without reapplying its target every half-second")
+check(manualSettleMotion.target(angle: 59, time: 3.2, settings: manualSettleSettings)
+      == BlurMath.progress(angle: 59, settings: manualSettleSettings),
+      "Actual movement resumes the manual fold after a stationary clear")
+check(manualSettleMotion.target(angle: 59, time: 3.71, settings: manualSettleSettings) == 0
+      && manualSettleMotion.target(angle: 59, time: 3.72, settings: manualSettleSettings) == 0,
+      "A second manual hold clears and remains clear on the following frame")
 let newMigrated = try JSONDecoder().decode(BlurSettings.self, from: legacy)
 check(newMigrated.automaticStart && newMigrated.nearClosedAngle == 30 && newMigrated.holdWhenStill && newMigrated.endAngle == 15, "Migration uses the new endpoint without overwriting old manual angles")
 adaptive.nearClosedAngle = 11
@@ -317,6 +347,44 @@ check(abs(glide.estimated(now: 2.4) - 48) < 0.05, "The glide stops at the next w
 check(!glide.isExtrapolating(now: 2.4), "The tracker settles after one predicted degree so the display clock can pause")
 glide.sample(50, time: 6.4)
 check(glide.degreesPerSecond == 0 && glide.estimated(now: 6.5) == 50, "A sample after a long pause discards stale velocity before reversing")
+
+// Drive the actual sensor -> fractional estimate -> motion -> presentation
+// pipeline. Whole-degree-only motion tests cannot expose a display clock that
+// mistakes tiny per-frame changes for a stationary lid.
+for rate in [60, 120] {
+    for framesPerDegree in [rate, rate / 2] {
+        var tracker = LidAngleTracker()
+        var continuousMotion = LidMotion()
+        var presentation = FoldPresentation()
+        let settings = BlurSettings()
+        tracker.sample(110, time: 0)
+        continuousMotion.setOpenAngle(110, time: 0)
+        tracker.sample(104, time: 0.1)
+        _ = continuousMotion.target(angle: 104, time: 0.1, settings: settings)
+        var previousTarget = 0.0
+        var previousProgress = 0.0
+        var keptClosing = true
+        for frame in 0...(framesPerDegree * 6) {
+            let time = 0.1 + Double(frame) / Double(rate)
+            if frame.isMultiple(of: framesPerDegree) {
+                tracker.sample(104 - Double(frame / framesPerDegree), time: time)
+            }
+            let target = continuousMotion.target(angle: tracker.estimated(now: time), time: time, settings: settings)
+            presentation.update(target: target, elapsed: 1 / Double(rate), snapshotReady: true, duration: settings.smoothing)
+            keptClosing = keptClosing && continuousMotion.openAngle == 110
+                && target >= previousTarget && presentation.progress >= previousProgress
+            previousTarget = target
+            previousProgress = presentation.progress
+        }
+        check(keptClosing, "A continuous fractional close at \(rate) Hz and \(Double(rate) / Double(framesPerDegree)) degrees/second never clears or reverses")
+        var heldTarget = previousTarget
+        for frame in 1...(rate * 4) {
+            let time = 0.1 + Double(framesPerDegree * 6 + frame) / Double(rate)
+            heldTarget = continuousMotion.target(angle: tracker.estimated(now: time), time: time, settings: settings)
+        }
+        check(heldTarget == 0 && continuousMotion.openAngle == 97, "A genuine hold after fractional closing still adopts the resting angle at \(rate) Hz")
+    }
+}
 print("Passed \(count) total behavior checks including screen adjustments and immediate activation")
 
 // Fixed smooth transitions include both endpoints, not just intermediate angles.
@@ -352,6 +420,19 @@ captureEntry.update(target: 0, elapsed: 1 / 120, snapshotReady: true)
 check(captureEntry.progress > 0 && captureEntry.progress < 0.1, "Reopening during entry fades from the current visible fold")
 captureEntry.update(target: 1, elapsed: 1 / 120, snapshotReady: false)
 check(captureEntry.progress == 0 && captureEntry.entryOpacity == 0, "Losing or clearing the snapshot resets presentation state")
+var regularPresentation = FoldPresentation()
+var delayedPresentation = FoldPresentation()
+for target in [0.8, 0.0] {
+    for _ in 0..<72 {
+        regularPresentation.update(target: target, elapsed: 1 / 120, snapshotReady: true)
+    }
+    for elapsed in [0.1, 0.2, 0.05, 0.15, 0.1] {
+        delayedPresentation.update(target: target, elapsed: elapsed, snapshotReady: true)
+    }
+    check(abs(regularPresentation.progress - delayedPresentation.progress) < 0.000000001
+        && abs(regularPresentation.entryOpacity - delayedPresentation.entryOpacity) < 0.000000001,
+        "Capture entry and fold presentation preserve elapsed response time through 100/200 ms frame gaps toward \(target)")
+}
 var zeroLegacy = BlurSettings()
 zeroLegacy.smoothing = 0
 var slowLegacy = zeroLegacy

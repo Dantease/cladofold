@@ -120,7 +120,7 @@ struct BlurSettings: Equatable, Codable {
         smoothing = Self.clamp(smoothing, Self.smoothingRange, fallback: Self.defaultSmoothing)
         dimming = Self.clamp(dimming, 0...0.65, fallback: 0.2)
         borderDepth = Self.clamp(borderDepth, 0...1.5, fallback: 1)
-        nearClosedAngle = Self.clamp(nearClosedAngle, 0...30, fallback: 30)
+        nearClosedAngle = Self.clamp(nearClosedAngle, 0...60, fallback: 30)
         clearAtAngle = Self.clamp(clearAtAngle, 40...130, fallback: 90)
         adjustmentAllowance = Self.clamp(adjustmentAllowance, 3...15, fallback: 5)
         for key in Array(presetDefaults.keys) {
@@ -278,7 +278,10 @@ struct LidMotion {
             setOpenAngle(angle, time: time)
             return settings.automaticStart ? 0 : BlurMath.progress(angle: angle, settings: settings)
         }
-        if abs(angle - previousAngle) >= 0.05 {
+        // The display clock receives fractional, extrapolated angles. Compare
+        // against the last accepted movement so slow sub-threshold frame steps
+        // accumulate instead of being mistaken for a stationary hold.
+        if abs(angle - (lastDistinctAngle ?? previousAngle)) >= 0.05 {
             if let lastDistinctAngle {
                 let dt = time - lastDistinctTime
                 if dt > 0, dt < 4 {
@@ -291,7 +294,10 @@ struct LidMotion {
         }
         self.previousAngle = angle
         if !settings.holdWhenStill && time - lastMovement >= 0.5 {
-            setOpenAngle(angle, time: time)
+            // Automatic mode adopts a new resting angle. Manual thresholds
+            // must stay cleared until movement resumes; resetting their hold
+            // clock would reapply the same blur on the very next frame.
+            if settings.automaticStart { setOpenAngle(angle, time: time) }
             return 0
         }
         guard settings.automaticStart else { return BlurMath.progress(angle: angle, settings: settings) }

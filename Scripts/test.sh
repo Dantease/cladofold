@@ -6,6 +6,8 @@ swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/Blur
 build/behavior-tests
 swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/CaptureAccess.swift Tests/CaptureAccess/main.swift -o build/capture-access-tests
 build/capture-access-tests
+swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/App/LatestSampleMailbox.swift Tests/SensorMonitor/main.swift -o build/sensor-monitor-tests
+build/sensor-monitor-tests
 swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/Shared/BlurModel.swift Sources/Shared/BlurFilter.swift Tests/Rendering/main.swift -o build/render-tests
 build/render-tests
 

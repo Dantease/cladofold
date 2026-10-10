@@ -23,6 +23,10 @@ jobs:
           build/capture-access-tests
       - name: Universal app and System Settings pane
         run: ./Scripts/build.sh
+      - name: Sensor delivery and restart
+        run: |
+          swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/App/LatestSampleMailbox.swift Tests/SensorMonitor/main.swift -o build/sensor-monitor-tests
+          build/sensor-monitor-tests
       - name: Installation safeguards
         run: |
           swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/App/PaneInstaller.swift Tests/Installation/main.swift -o build/installation-tests
