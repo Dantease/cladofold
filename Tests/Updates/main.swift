@@ -6,6 +6,10 @@ import Sparkle
 // same SUEnableAutomaticChecks/SUAutomaticallyUpdate defaults as production.
 // --install TARGET FEED EXPECTED_BUILD performs a real Sparkle install only
 // into an inactive fixture under build/update-smoke, never Applications.
+// Run installation checks from a signed runner .app with its own identifier
+// (com.dante.cladofold.UpdateSmokeRunner), executable and embedded Sparkle.
+// A standalone executable can fetch the feed but fail installer authorization
+// with error 4005/-60008. Sign the runner and framework with the same Team ID.
 
 @MainActor func policyChecks() {
     let identifier = "com.dante.cladofold.UpdaterPolicyTests"

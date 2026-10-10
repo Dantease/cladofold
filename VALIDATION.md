@@ -1,6 +1,19 @@
-# Validation — 1.3.2 preview
+# Validation — 1.4.0 preview
 
 Build host: Apple silicon MacBook Pro (M5 Max), macOS 26.6.2, Apple Swift 6.3.3.
+
+## October 10, 2026 — 1.4.0 automatic updates
+
+Version 1.4.0, build 36, adds Sparkle 2.10.0 with pinned dependency verification, signed feeds, archive verification before extraction, automatic checks/downloads, opt-out controls, and deferred user-requested relaunch while folding, capturing, sleeping, or locked. Source commit: `bcf9f745e7ee9f51b011ab2c337b573d1701ebd2`. ECC Swift build, app integration, and security reviews found no remaining blocking issues.
+
+All 364 local checks pass: the existing 338 native checks, 14 feed-integrity checks including interoperability with Sparkle's official signing tool, and 12 policy checks against the real framework. All 29 website tests and its production build pass. Policy checks cover persisted opt-out, correct check/download toggle order, suppressed scheduled foreground windows, exactly-once deferred relaunch, and cancellation on shutdown.
+
+Apple accepted the app (`9a6b44f1-0c81-4599-967c-9cb80089734b`) and DMG (`e6cbee42-b607-464a-9d65-5f8b4c2defea`) for notarization. Both tickets were stapled and validate. The app extracted from both DMG and ZIP passes strict signature verification and Gatekeeper assessment. App and embedded pane versions are 1.4.0/36 with arm64/x86_64 slices. Both packages contain the same app executable as the signed build, SHA-256 `68a2b7bcd7fcc0b9639150fd07ef7d19b976c3ec27566c5296ffd251a2ea91e3`.
+
+- DMG SHA-256: `028c81914b34f9291530b7dfa1f7da187e3b8884015e0ee7833a33b7c852d544`
+- ZIP SHA-256: `e0b8598577dfd50da9df48416260797f6334734518dfae9bba40c005b817f0a5`
+
+[GitHub Mac CI](https://github.com/Dantease/cladofold/actions/runs/38039671258) passed, including the universal build and updater policy checks. Uploaded draft asset digests match all three local files. The production feed and DMG authenticate against the embedded public key. A signed test runner upgraded an inactive, isolated app clone from build 35 to 36 using the final DMG and a separately signed loopback feed; its resulting executable exactly matched the release and passed strict signature verification and Gatekeeper. The already-current check passed. Changing signed feed content caused Sparkle to reject the feed with an EdDSA mismatch and left build 35 unchanged. The first standalone test runner lacked a signed app identity and could not launch the installer; using the signed test app resolved that harness issue. The public GitHub release contains the verified DMG, ZIP and checksum manifest; the website deploy verifies the feed and public DMG before serving them. Existing pre-1.4.0 users must upgrade manually once to gain the updater. Existing physical-lid, older-hardware, and permission-retention testing limitations remain applicable.
 
 ## October 10, 2026 — 1.3.2 preview distribution
 

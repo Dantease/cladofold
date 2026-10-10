@@ -4,11 +4,11 @@
 
 **a softer close. a clearer open.** cladofold. adds a smooth, hinge-aware fold to your MacBook display as you close and reopen the lid.
 
-[![download](https://img.shields.io/github/v/release/Dantease/cladofold?include_prereleases&color=dfff48&label=download)](https://github.com/Dantease/cladofold/releases/download/v1.3.2-preview/cladofold.-1.3.2-universal-notarized.dmg)
+[![download](https://img.shields.io/github/v/release/Dantease/cladofold?include_prereleases&color=dfff48&label=download)](https://github.com/Dantease/cladofold/releases/download/v1.4.0-preview/cladofold.-1.4.0-universal-notarized.dmg)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-25272b)](#compatibility)
 [![MIT](https://img.shields.io/badge/license-MIT-dfff48)](LICENSE)
 
-### [↓ download cladofold. for Mac](https://github.com/Dantease/cladofold/releases/download/v1.3.2-preview/cladofold.-1.3.2-universal-notarized.dmg)
+### [↓ download cladofold. for Mac](https://github.com/Dantease/cladofold/releases/download/v1.4.0-preview/cladofold.-1.4.0-universal-notarized.dmg)
 
 [install](#install) · [compatibility](#compatibility) · [privacy](#privacy) · [support](#support) · [build](#build)
 
@@ -22,13 +22,19 @@ cladofold. softens, darkens, and draws the desktop toward the hinge. It begins f
 
 Signed with Developer ID and notarized by Apple, so macOS asks once whether to open it, the same as any app downloaded from the web.
 
+## updates
+
+Version 1.4.0 and later check for updates automatically while running, download signed updates, and install them when you quit. Use **cf. → Check for Updates…** to check or install sooner; **Automatically Update** controls background checking and downloading. Updates never force a restart during a fold. Older versions require one manual install of 1.4.0 to gain this feature.
+
+New code reaches users after a signed release and its update feed are published; a Git commit alone does not ship an update. [Release instructions](Distribution/UPDATES.md).
+
 ## compatibility
 
 Requires macOS 14+, Apple silicon or Intel with Metal graphics, a built-in MacBook display, and a continuous lid-angle sensor. Sensor support is expected on 14/16-inch MacBook Pro and M2-or-newer MacBook Air models. [Compatibility details](Distribution/COMPATIBILITY.md).
 
 ## privacy
 
-No accounts, advertising, or analytics. One temporary desktop frame stays in memory during the fold, is never saved or uploaded, and is discarded when the effect clears.
+No accounts, advertising, or analytics. One temporary desktop frame stays in memory during the fold, is never saved or uploaded, and is discarded when the effect clears. Update checks contact cladofold.app and downloads come from GitHub; system profiling is disabled.
 
 ## support
 
@@ -36,7 +42,7 @@ No accounts, advertising, or analytics. One temporary desktop frame stays in mem
 
 ## build
 
-Requires Xcode or the Command Line Tools. No packages are downloaded.
+Requires Xcode or the Command Line Tools and Node.js 24 for update-feed checks. The build downloads Sparkle 2.10.0 from its official release and verifies a pinned SHA-256 before use.
 
 ```sh
 ./Scripts/test.sh && ./Scripts/build.sh

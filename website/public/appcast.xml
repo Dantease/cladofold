@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>cladofold.</title>
+        <item>
+            <title>1.4.0</title>
+            <pubDate>Sat, 10 Oct 2026 12:04:03 -0500</pubDate>
+            <link>https://cladofold.app/</link>
+            <sparkle:version>36</sparkle:version>
+            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/Dantease/cladofold/releases/download/v1.4.0-preview/cladofold.-1.4.0-universal-notarized.dmg" length="5625129" type="application/octet-stream" sparkle:edSignature="EDTHcjj36bXcnBMlRvGnSX5hvbhWwxTksi/+KXcs15A5/gMTd1HntlDsFWJd4G+5abJkwx5A6BGsNzDV5SYHDw=="></enclosure>
+        </item>
+    </channel>
+</rss><!-- sparkle-signatures:
+edSignature: x+0/SVeb7dObeewM/6lRV4xCZlGFFpzNO/uXm8gyFknygMgZOrJ3EC/XPTwnfRRQcs32VimYnYHMg+p+3NeZBA==
+length: 1123
+-->
