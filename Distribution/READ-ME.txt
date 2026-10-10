@@ -1,4 +1,4 @@
-cladofold. 1.3.2 — preview
+cladofold. 1.4.0 — preview
 A softer close. A clearer open.
 
 INSTALL
@@ -61,11 +61,22 @@ The menu-bar cf. button also provides settings, preview and Quit.
 Control–Option–Command–B disables the effect immediately.
 The desktop preview runs for six seconds and clears automatically.
 
+UPDATES
+Version 1.4.0 and later check for updates automatically while running and
+download verified updates in the background. They install when you quit;
+choose “Check for Updates…” from the cf. menu to check or install sooner.
+“Automatically Update” turns background checks and downloads on or off.
+Installing may require macOS authorization if you cannot write to the app's
+location. Install the app in Applications rather than running it from the DMG.
+Versions before 1.4.0 need one manual download to gain automatic updating.
+
 PRIVACY AND BEHAVIOR
 The app captures one temporary desktop frame per fold. The image freezes during
 that animation while your applications keep running underneath. Frames remain
 in memory on your Mac, are discarded when the effect clears, and are never
-saved or transmitted. The app contains no analytics or automatic updater.
+saved or transmitted. The app contains no analytics. Automatic update checks contact cladofold.app;
+update downloads come from GitHub. Screen frames and saved preferences are
+never included. System profiling is disabled.
 The effect clears on sleep, lock, display changes, sensor loss or disable.
 macOS owns the lock screen and sleep behavior; an animation cannot run while
 asleep or cover the lock screen. External displays are not affected.

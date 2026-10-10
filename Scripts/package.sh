@@ -51,4 +51,7 @@ rm "$STAGE/Applications"
 rm -f "dist/$NAME.zip"
 ditto -c -k --sequesterRsrc --keepParent "$STAGE" "dist/$NAME.zip"
 (cd dist && shasum -a 256 "$NAME.dmg" "$NAME.zip" > "$NAME-SHA256.txt")
+if [ "$MODE" = '--notarize' ]; then
+    ./Scripts/generate-update-feed.sh
+fi
 printf 'Shareable files: dist/%s.{dmg,zip}\n' "$NAME"

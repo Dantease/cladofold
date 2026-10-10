@@ -3,6 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP='build/cladofold..app'
 PANE='build/cladofold..prefPane'
+SPARKLE_ROOT=$(./Scripts/prepare-sparkle.sh)
+SPARKLE_FRAMEWORK="$APP/Contents/Frameworks/Sparkle.framework"
 if [ "${CODE_SIGN_IDENTITY+x}" = x ]; then
     IDENTITY="${CODE_SIGN_IDENTITY:--}"
 else
@@ -23,11 +25,13 @@ else
         echo 'warning: no stable signing identity found; Screen Recording permission may need to be granted again after a rebuild' >&2
     fi
 fi
-mkdir -p build/ModuleCache build/architectures "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/PlugIns" "$PANE/Contents/MacOS" "$PANE/Contents/Resources"
+mkdir -p build/ModuleCache build/architectures "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/PlugIns" "$APP/Contents/Frameworks" "$PANE/Contents/MacOS" "$PANE/Contents/Resources"
 # Compile both slices, regardless of the build machine's processor.
 for ARCH in arm64 x86_64; do
     SWIFT_FLAGS=(-swift-version 5 -target "$ARCH-apple-macos14.0" -module-cache-path build/ModuleCache -O)
-    swiftc "${SWIFT_FLAGS[@]}" Sources/Shared/*.swift Sources/App/*.swift -o "build/architectures/cladofold-$ARCH"
+    swiftc "${SWIFT_FLAGS[@]}" -F "$SPARKLE_ROOT" -framework Sparkle \
+        -Xlinker -rpath -Xlinker '@executable_path/../Frameworks' \
+        Sources/Shared/*.swift Sources/App/*.swift -o "build/architectures/cladofold-$ARCH"
     swiftc "${SWIFT_FLAGS[@]}" -emit-library -module-name CladofoldPane -Xlinker -install_name -Xlinker '@rpath/CladofoldPane' Sources/Shared/*.swift Sources/PreferencePane/*.swift -o "build/architectures/CladofoldPane-$ARCH"
 done
 lipo -create build/architectures/cladofold-arm64 build/architectures/cladofold-x86_64 -output "$APP/Contents/MacOS/cladofold"
@@ -38,6 +42,7 @@ swiftc -swift-version 5 -module-cache-path build/ModuleCache -O Scripts/MakeIcon
 build/make-icon build/cladofold-cf.iconset
 cp build/cladofold-cf.icns "$APP/Contents/Resources/"
 cp build/cladofold-cf.icns "$PANE/Contents/Resources/"
+cp "$SPARKLE_ROOT/LICENSE" "$APP/Contents/Resources/Sparkle-LICENSE.txt"
 rm -f "$APP/Contents/Resources/cladofold.icns" "$PANE/Contents/Resources/cladofold.icns"
 SIGN_FLAGS=(--force --sign "$IDENTITY")
 if [ "$IDENTITY" != '-' ]; then SIGN_FLAGS+=(--options runtime --timestamp); fi
@@ -45,6 +50,17 @@ codesign "${SIGN_FLAGS[@]}" "$PANE"
 # Replace the embedded pane as a unit; never leave files from an older version.
 rm -rf "$APP/Contents/PlugIns/cladofold..prefPane"
 ditto "$PANE" "$APP/Contents/PlugIns/cladofold..prefPane"
+# Keep the upstream cache intact and preserve the framework's symlinks/modes.
+rm -rf "$SPARKLE_FRAMEWORK"
+ditto "$SPARKLE_ROOT/Sparkle.framework" "$SPARKLE_FRAMEWORK"
+# This app is not sandboxed and does not enable Sparkle's XPC services.
+# https://sparkle-project.org/documentation/sandboxing/#removing-xpc-services
+rm -rf "$SPARKLE_FRAMEWORK/Versions/B/XPCServices" "$SPARKLE_FRAMEWORK/XPCServices"
+# Sign retained nested executables before sealing their containing bundles.
+# No special entitlements are needed for this nonsandboxed integration.
+codesign "${SIGN_FLAGS[@]}" "$SPARKLE_FRAMEWORK/Versions/B/Autoupdate"
+codesign "${SIGN_FLAGS[@]}" "$SPARKLE_FRAMEWORK/Versions/B/Updater.app"
+codesign "${SIGN_FLAGS[@]}" "$SPARKLE_FRAMEWORK"
 codesign "${SIGN_FLAGS[@]}" "$APP"
 codesign --verify --deep --strict "$APP"
 if [ "$IDENTITY" = '-' ]; then
@@ -54,5 +70,6 @@ else
 fi
 lipo "$APP/Contents/MacOS/cladofold" -verify_arch arm64 x86_64
 lipo "$PANE/Contents/MacOS/CladofoldPane" -verify_arch arm64 x86_64
+lipo "$SPARKLE_FRAMEWORK/Sparkle" -verify_arch arm64 x86_64
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")
 printf 'Built universal cladofold. %s (macOS 14.0+)\n' "$VERSION"

@@ -1,6 +1,6 @@
 # cladofold. compatibility
 
-Version 1.3.2 preview. Hardware research: September 12, 2026.
+Version 1.4.0 preview. Hardware research: September 12, 2026.
 
 The universal download contains **arm64 and x86_64** executables for both the app and the System Settings pane. Minimum deployment target is **macOS Sonoma 14.0**. A successful cross-compilation is not a substitute for testing on each processor and OS version.
 

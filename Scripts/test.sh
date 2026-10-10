@@ -13,3 +13,5 @@ build/render-tests
 
 swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/App/PaneInstaller.swift Tests/Installation/main.swift -o build/installation-tests
 build/installation-tests build/installation-tests-data
+node --test Tests/Updates/feed.test.mjs
+./Scripts/test-updater.sh

@@ -1,5 +1,9 @@
 # Third-party notices
 
+## Sparkle updater
+
+The native app embeds [Sparkle 2.10.0](https://github.com/sparkle-project/Sparkle/releases/tag/2.10.0), distributed under its permissive license and included third-party licenses. `Scripts/prepare-sparkle.sh` pins the official release archive and SHA-256. The complete upstream license and external notices are bundled at `Contents/Resources/Sparkle-LICENSE.txt`. Sparkle handles signed update checks, downloads, verification, and installation.
+
 ## MacBook model — CC BY 4.0
 
 The website includes “macbook pro M3 16 inch 2024” by **jackbaeten**, under [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).

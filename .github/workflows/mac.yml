@@ -12,6 +12,11 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Update feed signature and tamper checks
+        run: node --test Tests/Updates/feed.test.mjs
       - name: Behavioral timelines
         run: |
           mkdir -p build/ModuleCache
@@ -23,6 +28,8 @@ jobs:
           build/capture-access-tests
       - name: Universal app and System Settings pane
         run: ./Scripts/build.sh
+      - name: Sparkle preferences and deferred relaunch
+        run: ./Scripts/test-updater.sh
       - name: Sensor delivery and restart
         run: |
           swiftc -swift-version 5 -module-cache-path build/ModuleCache Sources/App/LatestSampleMailbox.swift Tests/SensorMonitor/main.swift -o build/sensor-monitor-tests

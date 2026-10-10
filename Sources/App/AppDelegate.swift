@@ -44,6 +44,11 @@ import QuartzCore
     private var motion = LidMotion()
     private var motionSettings = BlurSettings()
     private var lidTracker = LidAngleTracker()
+    private lazy var appUpdater = AppUpdater { [weak self] in
+        guard let self else { return false }
+        return !self.suspended && !self.locked && self.previewStart == nil
+            && self.progress == 0 && !self.overlay.capturing && !self.overlay.visible
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard NSRunningApplication.runningApplications(withBundleIdentifier: CladofoldID.app).count <= 1 else {
@@ -78,6 +83,9 @@ import QuartzCore
         reconcileLoginItem()
         publishStatus()
         prepareAfterResume()
+        // Start Sparkle after the launch callback. Its scheduler and downloads
+        // are independent of sensor delivery and the display clock.
+        DispatchQueue.main.async { [weak self] in self?.appUpdater.start() }
         let args = CommandLine.arguments
         if let index = args.firstIndex(of: "--command"), args.indices.contains(index + 1) {
             command(args[index + 1])
@@ -317,7 +325,11 @@ import QuartzCore
             info["frameIntervalMaxMilliseconds"] = sorted.last! * 1000
         }
         DistributedNotificationCenter.default().postNotificationName(CladofoldID.status, object: nil, userInfo: info, deliverImmediately: true)
+        let updateAvailable = appUpdater.updateAvailable
+        statusItem.length = updateAvailable ? 44 : NSStatusItem.squareLength
+        statusItem.button?.title = updateAvailable ? "cf. ↑" : "cf."
         statusItem.button?.toolTip = "cladofold. · \(message)" + (freshAngle.map { " · \(Int($0))°" } ?? "")
+            + (updateAvailable ? " · Update available" : "")
         statusItem.button?.contentTintColor = ready ? nil : .systemOrange
     }
 
@@ -351,6 +363,8 @@ import QuartzCore
             menu.addItem(item("Allow Screen Recording…", action: #selector(requestPermission)))
             menu.addItem(item("Check again", action: #selector(recheckCaptureAccess)))
         }
+        menu.addItem(.separator())
+        appUpdater.addMenuItems(to: menu)
         menu.addItem(.separator())
         menu.addItem(item("Disable effect now", action: #selector(disableEffect)))
         menu.addItem(item("Quit cladofold.", action: #selector(quit), key: "q"))
@@ -400,6 +414,8 @@ import QuartzCore
             let stop = item("Disable effect now", action: #selector(disableEffect), key: "b")
             stop.keyEquivalentModifierMask = [.control, .option, .command]
             appMenu.addItem(stop)
+            appMenu.addItem(.separator())
+            appUpdater.addMenuItems(to: appMenu)
             appMenu.addItem(.separator())
             appMenu.addItem(item("Quit cladofold.", action: #selector(quit), key: "q"))
             appItem.submenu = appMenu
@@ -520,6 +536,7 @@ import QuartzCore
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showSettings(); return true }
     func applicationWillTerminate(_ notification: Notification) {
+        appUpdater.stop()
         clear()
         sensor.stop()
         animationDisplayLink?.invalidate()
