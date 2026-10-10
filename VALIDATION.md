@@ -1,6 +1,17 @@
-# Validation — 1.3.2 preview candidate
+# Validation — 1.3.2 preview
 
 Build host: Apple silicon MacBook Pro (M5 Max), macOS 26.6.2, Apple Swift 6.3.3.
+
+## October 10, 2026 — 1.3.2 preview distribution
+
+Version 1.3.2, build 35, is published as `v1.3.2-preview` from source commit `e2a9ad927dae0320c374865ec620105dbd57d07a`. Apple accepted both the application and DMG for notarization. Their tickets are stapled and validate; Gatekeeper accepts the app extracted from both DMG and ZIP as Notarized Developer ID. Both app and embedded pane contain arm64/x86_64 slices and the expected version/build. The packaged installation guide names the current controls and correctly describes notarization.
+
+All 338 native checks and 29 website checks pass. [GitHub's Mac build and behavior run](https://github.com/Dantease/cladofold/actions/runs/38038585267) also passed, including the added sensor delivery checks. The app executables extracted from DMG and ZIP exactly match the signed build (SHA-256 `1dd5ce60d9d4d48f5b7603a1145bb36942b2215114796a5257ece7816cce8b3b`). GitHub's three uploaded asset digests match the local DMG, ZIP, and checksum manifest. The public DMG URL resolves successfully.
+
+- DMG SHA-256: `f72b50693e38505b198010cb01b79541e9eadf5ec96141f4e0bb0252b013633c`
+- ZIP SHA-256: `c2416554fe04425c6eb6bc2f9f648f3cf9d73e42c15e3b0b6056bd0a4b2967f3`
+
+The website and repository download controls now pin this new release, preserving the older 1.3.1 assets for rollback. The physical-lid and older-hardware testing limits below remain applicable; notarization and packaging checks do not establish end-to-end animation smoothness.
 
 ## October 10, 2026 — ECC closing-stutter audit (local candidate)
 

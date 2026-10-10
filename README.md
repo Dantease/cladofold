@@ -4,15 +4,15 @@
 
 **a softer close. a clearer open.** cladofold. adds a smooth, hinge-aware fold to your MacBook display as you close and reopen the lid.
 
-[![download](https://img.shields.io/github/v/release/Dantease/cladofold?include_prereleases&color=dfff48&label=download)](https://github.com/Dantease/cladofold/releases/download/v1.3.1-preview/cladofold.-1.3.1-universal-notarized.dmg)
+[![download](https://img.shields.io/github/v/release/Dantease/cladofold?include_prereleases&color=dfff48&label=download)](https://github.com/Dantease/cladofold/releases/download/v1.3.2-preview/cladofold.-1.3.2-universal-notarized.dmg)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-25272b)](#compatibility)
 [![MIT](https://img.shields.io/badge/license-MIT-dfff48)](LICENSE)
 
-### [↓ download cladofold. for Mac](https://github.com/Dantease/cladofold/releases/download/v1.3.1-preview/cladofold.-1.3.1-universal-notarized.dmg)
+### [↓ download cladofold. for Mac](https://github.com/Dantease/cladofold/releases/download/v1.3.2-preview/cladofold.-1.3.2-universal-notarized.dmg)
 
 [install](#install) · [compatibility](#compatibility) · [privacy](#privacy) · [support](#support) · [build](#build)
 
-cladofold. softens, darkens, and draws the desktop toward the hinge. It begins from your current lid position; hold a new closing angle for one second and that becomes your new clear position. Appearance and lid behavior are adjustable in the app or its System Settings pane.
+cladofold. softens, darkens, and draws the desktop toward the hinge. It begins from your current lid position; hold a new closing angle briefly and that becomes your new clear position. Appearance and lid behavior are adjustable in the app or its System Settings pane.
 
 ## install
 
